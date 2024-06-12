@@ -30,3 +30,50 @@ entity estagio_if is
         BID               : out std_logic_vector(95 downto 0) := x"000000000000000000000000"
         );
 end entity;
+
+architecture if_arch of estagio_if is
+    component registrador_n is
+        generic (
+            constant N: integer := 8 
+        );
+        port (
+            clock  : in  std_logic;
+            clear  : in  std_logic;
+            enable : in  std_logic;
+            D      : in  std_logic_vector (N-1 downto 0);
+            Q      : out std_logic_vector (N-1 downto 0) 
+        );
+    end component;
+
+    component somador_m is
+        generic (
+            ...
+        );
+        port (
+            ...
+        );
+    end component;
+    signal plus4 : std_logic_vector (2 downto 0) := "100";
+
+begin
+    PLUS4 : somador_m
+        port map(
+            clock  => clock,
+            reset  =>,
+            num1   =>,
+            num2   => plus4,
+            result =>
+        );
+
+    REG1 : registrador_n
+	    generic map (N => 32)
+		port map (
+            clock => clock,
+            clear =>,
+            enable =>,
+            D => ,
+            Q =>
+		);
+    
+
+end architecture if_arch;
