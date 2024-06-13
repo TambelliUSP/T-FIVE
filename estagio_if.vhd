@@ -26,7 +26,7 @@ entity estagio_if is
 
         keep_simulating : in Boolean := True; -- Sinal que indica a continuação da simulação
         -- Saída
-        BID : out std_logic_vector(95 downto 0) := x "0000000000000000" -- Reg. de saída if para id
+        BID : out std_logic_vector(63 downto 0) := x "0000000000000000" -- Reg. de saída if para id
     );
 end entity;
 
@@ -145,5 +145,5 @@ begin
             result => pc_plus4
         );
     
-    BID <= pc_plus4 & mux1_out & mux2_out;
+    BID <= mux1_out & mux2_out;
 end architecture if_arch;
