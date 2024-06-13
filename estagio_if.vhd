@@ -12,26 +12,68 @@ use work.tipos.all;
 -- e de entrada no estágio_id.
 
 entity estagio_if is
-    generic (
-        imem_init_file: string := "imem.txt"          --Nome do arquivo conteúdo da memoria de programa
+    generic(
+        imem_init_file: string := "imem.txt" --Nome do arquivo com o conteúdo da memória de programa
     );
-    port (   
-        clock             : in  std_logic;-- Base de tempo vinda da bancada de teste
-        --Entradas vindas do ID
-        jump_pc           : in  std_logic_vector(31 downto 0) := x"00000000"; -- endereço do desvio
-        pc_src            : in  std_logic_vector(1 downto 0); -- chave seletora do MUX de entrada do PC
-        pc_write          : in  std_logic; -- habilita atualização do PC
-        if_id_write       : in  std_logic; -- habilita a escrita no buffer entre IF e ID
-        hd_hazard_flush   : in  std_logic; -- carrega zeros na parte do RI do BID
-        branch_nop        : in  std_logic; -- determina a inserção de NOP, desvio ou pulo
+    port(
+        --Entradas
+        clock : in std_logic; -- Base de tempo vinda da bancada de teste
+        id_hd_hazard : in std_logic; -- Sinal de controle que carrega 0's na parte do RI do registrador de saída BID
 
-        keep_simulating   : in Boolean := True; -- Sinal que indica fim da simulação
-    -- Saída para o ID
-        BID               : out std_logic_vector(95 downto 0) := x"000000000000000000000000"
-        );
+        id_Branch_nop: in std_logic; -- Sinal que determina inserção de NOP- desvio ou pulo
+        id_PC_Src : in std_logic; -- Seleção do mux da entrada do PC
+        id_Jump_PC : in std_logic_vector(31 downto 0) := x"00000000";-- Endereço do Jump ou desvio realizado
+
+        keep_simulating : in Boolean := True; -- Sinal que indica a continuação da simulação
+        -- Saída
+        BID : out std_logic_vector(95 downto 0) := x "0000000000000000" -- Reg. de saída if para id
+    );
 end entity;
 
 architecture if_arch of estagio_if is
+    component mux_2x1_n is
+        generic (
+            constant BITS: integer := 32
+        );
+        port(
+            D1      : in  std_logic_vector (BITS-1 downto 0);
+            D0      : in  std_logic_vector (BITS-1 downto 0);
+            SEL     : in  std_logic;
+            MUX_OUT : out std_logic_vector (BITS-1 downto 0)
+        );
+    end component;
+
+    component mux_3x1_n is
+        generic (
+            constant BITS: integer := 32
+        );
+        port(
+            D2      : in  std_logic_vector (BITS-1 downto 0);
+            D1      : in  std_logic_vector (BITS-1 downto 0);
+            D0      : in  std_logic_vector (BITS-1 downto 0);
+            SEL     : in  std_logic_vector (1 downto 0);
+            MUX_OUT : out std_logic_vector (BITS-1 downto 0)
+        );
+    end component;
+
+    component ram is
+        generic(
+            address_bits	: integer 	:= 32;		 
+            size			: integer 	:= 4096;	
+            ram_init_file	: string 	:= "imem.txt" 
+        );
+        port (
+            -- Entradas
+            clock 	: in  std_logic;								
+            write 	: in  std_logic;								
+            address : in  std_logic_vector(address_bits-1 downto 0);
+            data_in : in  std_logic_vector(address_bits-1 downto 0);
+            
+            -- Saída
+            data_out: out std_logic_vector(address_bits-1 downto 0)
+        );
+    end component;
+
     component registrador_n is
         generic (
             constant N: integer := 8 
@@ -53,27 +95,55 @@ architecture if_arch of estagio_if is
             ...
         );
     end component;
-    signal plus4 : std_logic_vector (2 downto 0) := "100";
+
+    signal pc_plus4, mux1_out, mux2_out, ram_out, hazard_bop : std_logic_vector(31 downto 0);
+
 
 begin
+    hazard_bop <= id_Branch_nop or id_hd_hazard;
+
+    MUX3x1 : mux_3x1_n
+        generic map (BITS => 32)
+        port map(
+            D2 => pc_plus4,
+            D1 => id_Jump_PC,
+            D0 => "00000000000000000000010000000000",
+            SEL => id_PC_Src,
+            MUX_OUT => mux1_out
+        );
+
+    MUX2x1 : mux_2x1_n
+        generic map (BITS => 32)
+        port map(
+            D1 => ram_out,
+            D0 => "00000000000000000000000000000000",
+            SEL => hazard_bop,
+            MUX_OUT => mux2_out
+        );
+
+    RAM : ram
+        generic map (
+        address_bits	: integer 	:= 32;		 
+        size			: integer 	:= 4096;	
+        ram_init_file	: string 	:= "imem.txt" 
+        );
+        port map(
+            clock 	 => clock,								
+            write 	 => "0",							
+            address  => mux1_out,
+            data_in  => "00000000000000000000000000000000",
+            data_out => ram_out,
+        );
+    
+
     PLUS4 : somador_m
         port map(
             clock  => clock,
             reset  =>,
-            num1   =>,
-            num2   => plus4,
-            result =>
+            num1   => mux1_out,
+            num2   => "100",
+            result => pc_plus4
         );
-
-    REG1 : registrador_n
-	    generic map (N => 32)
-		port map (
-            clock => clock,
-            clear =>,
-            enable =>,
-            D => ,
-            Q =>
-		);
     
-
+    BID <= pc_plus4 & mux1_out & mux2_out;
 end architecture if_arch;
