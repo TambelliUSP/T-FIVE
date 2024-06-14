@@ -26,7 +26,7 @@ entity estagio_if is
 
         keep_simulating : in Boolean := True; -- Sinal que indica a continuação da simulação
         -- Saída
-        BID : out std_logic_vector(63 downto 0) := x "0000000000000000" -- Reg. de saída if para id
+        BID : out std_logic_vector(63 downto 0) := x"0000000000000000" -- Reg. de saída if para id
     );
 end entity;
 
@@ -87,63 +87,72 @@ architecture if_arch of estagio_if is
         );
     end component;
 
-    component somador_m is
-        generic (
-            ...
-        );
-        port (
-            ...
+    component adder is
+        port(
+            a, b: in std_logic_vector(31 downto 0);
+            y: out std_logic_vector(31 downto 0)
         );
     end component;
 
-    signal pc_plus4, mux1_out, mux2_out, ram_out, hazard_bop : std_logic_vector(31 downto 0);
+    signal pc, pc_plus4, mux_pc, mux_ri_if, ram_out : std_logic_vector(31 downto 0) := x"00000000";
 
+    signal hazard_nop: std_logic;
 
 begin
-    hazard_bop <= id_Branch_nop or id_hd_hazard;
+    hazard_nop <= id_Branch_nop or id_hd_hazard;
 
-    MUX3x1 : mux_3x1_n
+
+    PC_SOURCE_MUX: mux_2x1_n
         generic map (BITS => 32)
         port map(
-            D2 => pc_plus4,
-            D1 => id_Jump_PC,
-            D0 => "00000000000000000000010000000000",
+            D0 => pc_plus4,
+            D1 => id_Jump_Pc,
             SEL => id_PC_Src,
-            MUX_OUT => mux1_out
+            MUX_OUT => mux_pc
         );
 
-    MUX2x1 : mux_2x1_n
+    PC_REG: registrador_n
+        generic map (
+            N => 32
+        )
+        port map (
+            clock  => clock,
+            clear  => '0',
+            enable => "not"(hazard_nop),
+            D      => mux_pc,
+            Q      => pc
+        );
+
+    MUX_RI: mux_2x1_n
         generic map (BITS => 32)
         port map(
-            D1 => ram_out,
-            D0 => "00000000000000000000000000000000",
-            SEL => hazard_bop,
-            MUX_OUT => mux2_out
+            D0 => ram_out,
+            D1 => "00000000000000000000000000000000",
+            SEL => hazard_nop,
+            MUX_OUT => mux_ri_if
         );
 
-    RAM : ram
+    IMEM : ram
         generic map (
-        address_bits	: integer 	:= 32;		 
-        size			: integer 	:= 4096;	
-        ram_init_file	: string 	:= "imem.txt" 
-        );
+            address_bits => 32, 
+            size => 4096,
+            ram_init_file => "imem.txt" 
+        )
         port map(
             clock 	 => clock,								
-            write 	 => "0",							
-            address  => mux1_out,
+            write 	 => '0',							
+            address  => pc,
             data_in  => "00000000000000000000000000000000",
-            data_out => ram_out,
+            data_out => ram_out
         );
     
 
-    PLUS4 : somador_m
-        port map(
-            clock  => clock,
-            reset  =>,
-            num1   => mux1_out,
-            num2   => "100",
-            result => pc_plus4
+    PLUS4: adder
+        port map (
+            a => pc,
+            b => "00000000000000000000000000000100",
+            y => pc_plus4
         );
     
-    BID <= mux1_out & mux2_out;
+    BID <= pc & mux_ri_if;
 end architecture if_arch;
