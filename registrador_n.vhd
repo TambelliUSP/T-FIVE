@@ -10,12 +10,12 @@ entity registrador_n is
         clear  : in  std_logic;
         enable : in  std_logic;
         D      : in  std_logic_vector (N-1 downto 0);
-        Q      : out std_logic_vector (N-1 downto 0) 
+        Q      : out std_logic_vector (N-1 downto 0)
     );
 end entity registrador_n;
 
 architecture comportamental of registrador_n is
-    signal IQ: std_logic_vector(N-1 downto 0);
+    signal IQ: std_logic_vector(N-1 downto 0) := (others => '0');
 begin
 
 process(clock, clear, enable, IQ)
