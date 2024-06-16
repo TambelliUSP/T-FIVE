@@ -3,4 +3,4 @@
 !*.vhd
 !README
 !.gitignore
-!imem.txt
+!imem*.txt

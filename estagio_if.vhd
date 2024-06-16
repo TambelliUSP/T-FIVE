@@ -30,32 +30,7 @@ entity estagio_if is
     );
 end entity;
 
-architecture if_arch of estagio_if is
-    component mux_2x1_n is
-        generic (
-            constant BITS: integer := 32
-        );
-        port(
-            D1      : in  std_logic_vector (BITS-1 downto 0);
-            D0      : in  std_logic_vector (BITS-1 downto 0);
-            SEL     : in  std_logic;
-            MUX_OUT : out std_logic_vector (BITS-1 downto 0)
-        );
-    end component;
-
-    component mux_3x1_n is
-        generic (
-            constant BITS: integer := 32
-        );
-        port(
-            D2      : in  std_logic_vector (BITS-1 downto 0);
-            D1      : in  std_logic_vector (BITS-1 downto 0);
-            D0      : in  std_logic_vector (BITS-1 downto 0);
-            SEL     : in  std_logic_vector (1 downto 0);
-            MUX_OUT : out std_logic_vector (BITS-1 downto 0)
-        );
-    end component;
-
+architecture behave of estagio_if is
     component ram is
         generic(
             address_bits	: integer 	:= 32;		 
@@ -74,63 +49,36 @@ architecture if_arch of estagio_if is
         );
     end component;
 
-    component registrador_n is
-        generic (
-            constant N: integer := 8 
-        );
-        port (
-            clock  : in  std_logic;
-            clear  : in  std_logic;
-            enable : in  std_logic;
-            D      : in  std_logic_vector (N-1 downto 0);
-            Q      : out std_logic_vector (N-1 downto 0) 
-        );
-    end component;
-
-    component adder is
-        port(
-            a, b: in std_logic_vector(31 downto 0);
-            y: out std_logic_vector(31 downto 0)
-        );
-    end component;
-
-    signal pc, pc_plus4, mux_pc, mux_ri_if, ram_out : std_logic_vector(31 downto 0) := x"00000000";
+    signal pc, pc_plus4, ri_if, ram_out : std_logic_vector(31 downto 0) := x"00000000";
 
     signal hazard_nop: std_logic;
 
+    signal stop_simulation: std_logic := '0';
+
 begin
     hazard_nop <= id_Branch_nop or id_hd_hazard;
+    pc_plus4 <= pc + x"00000004";
+    ri_if <= ram_out when hazard_nop = '0' else
+             x"00000000";
 
+    process(clock, keep_simulating)
+    begin
+        if (keep_simulating = True) and (clock'event and clock = '1') then
+            if (hazard_nop = '0' or id_PC_Src = '1') then
+                if (id_PC_Src = '1') then
+                    pc <= id_Jump_PC;
+                elsif (id_PC_Src = '0') then
+                    pc <= pc_plus4;
+                end if;
+            end if;
 
-    PC_SOURCE_MUX: mux_2x1_n
-        generic map (BITS => 32)
-        port map(
-            D0 => pc_plus4,
-            D1 => id_Jump_Pc,
-            SEL => id_PC_Src,
-            MUX_OUT => mux_pc
-        );
+            if (ri_if = x"0000006F") then
+                stop_simulation <= '1';
+            end if;
 
-    PC_REG: registrador_n
-        generic map (
-            N => 32
-        )
-        port map (
-            clock  => clock,
-            clear  => '0',
-            enable => "not"(hazard_nop),
-            D      => mux_pc,
-            Q      => pc
-        );
-
-    MUX_RI: mux_2x1_n
-        generic map (BITS => 32)
-        port map(
-            D0 => ram_out,
-            D1 => "00000000000000000000000000000000",
-            SEL => hazard_nop,
-            MUX_OUT => mux_ri_if
-        );
+            BID <= pc & ri_if;
+        end if;
+    end process;
 
     IMEM : ram
         generic map (
@@ -142,17 +90,7 @@ begin
             clock 	 => clock,								
             write 	 => '0',							
             address  => pc,
-            data_in  => "00000000000000000000000000000000",
+            data_in  => x"00000000",
             data_out => ram_out
         );
-    
-
-    PLUS4: adder
-        port map (
-            a => pc,
-            b => "00000000000000000000000000000100",
-            y => pc_plus4
-        );
-    
-    BID <= pc & mux_ri_if;
-end architecture if_arch;
+end architecture;
