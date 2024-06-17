@@ -2,6 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_signed.all;
+use std.env.stop;
 library work;
 use work.tipos.all;
 -- Especificação do estágio de BUSCA - if
@@ -118,9 +119,9 @@ begin
         end if;
     end process;
 
-    MAIN_PROC: process(clock, keep_simulating, halt_detected)
+    MAIN_PROC: process(clock, halt_detected)
     begin
-        if (keep_simulating = True) and (clock'event and clock = '1') and (halt_detected = '0') then
+        if (clock'event and clock = '1') and (halt_detected = '0') then
             if (hazard_nop = '0' or id_PC_Src = '1') then
                 if (id_PC_Src = '1') then
                     pc_if <= id_Jump_PC;
@@ -135,6 +136,12 @@ begin
 
             BID <= pc_if & ri_if;
         end if;
+    end process;
+
+    KEEP_SIMULATING_PROC: process
+    begin
+        wait until keep_simulating = False;
+        stop;
     end process;
 
     IMEM : ram
