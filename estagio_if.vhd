@@ -50,30 +50,30 @@ architecture behave of estagio_if is
         );
     end component;
 
-    signal pc_if, pc_plus4, ri_if, ram_out : std_logic_vector(31 downto 0) := x"00000000";
+    signal pc_if, pc_plus4_if, ri_if, ram_out_imem_if : std_logic_vector(31 downto 0) := x"00000000";
 
     signal COP_if: instruction_type;
 
-    signal hazard_nop: std_logic;
+    signal hazard_nop_if: std_logic;
 
     signal halt_detected: std_logic := '0';
 
 begin
     HAZARD_NOP_PROC: process(id_Branch_nop, id_hd_hazard)
     begin
-        hazard_nop <= id_Branch_nop or id_hd_hazard;
+        hazard_nop_if <= id_Branch_nop or id_hd_hazard;
     end process;
 
     PC_PLUS4_PROC: process(pc_if)
     begin
-        pc_plus4 <= pc_if + x"00000004";
+        pc_plus4_if <= pc_if + x"00000004";
     end process;
 
-    RI_IF_PROC: process(id_Branch_nop, ram_out, halt_detected)
+    RI_IF_PROC: process(id_Branch_nop, ram_out_imem_if, halt_detected)
     begin
         if (halt_detected = '0') then
             if (id_Branch_nop = '0') then
-                ri_if <= ram_out;
+                ri_if <= ram_out_imem_if;
             else
                 ri_if <= x"00000000";
             end if;
@@ -122,11 +122,11 @@ begin
     MAIN_PROC: process(clock, halt_detected)
     begin
         if (clock'event and clock = '1') and (halt_detected = '0') then
-            if (hazard_nop = '0' or id_PC_Src = '1') then
+            if (hazard_nop_if = '0' or id_PC_Src = '1') then
                 if (id_PC_Src = '1') then
                     pc_if <= id_Jump_PC;
                 elsif (id_PC_Src = '0') then
-                    pc_if <= pc_plus4;
+                    pc_if <= pc_plus4_if;
                 end if;
             end if;
 
@@ -155,6 +155,6 @@ begin
             write 	 => '0',							
             address  => pc_if,
             data_in  => x"00000000",
-            data_out => ram_out
+            data_out => ram_out_imem_if
         );
 end architecture;
