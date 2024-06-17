@@ -55,7 +55,7 @@ architecture behave of estagio_if is
 
     signal hazard_nop: std_logic;
 
-    signal stop_simulation: std_logic := '0';
+    signal halt_detected: std_logic := '0';
 
 begin
     HAZARD_NOP_PROC: process(id_Branch_nop, id_hd_hazard)
@@ -68,12 +68,14 @@ begin
         pc_plus4 <= pc_if + x"00000004";
     end process;
 
-    RI_IF_PROC: process(id_Branch_nop, ram_out)
+    RI_IF_PROC: process(id_Branch_nop, ram_out, halt_detected)
     begin
-        if (id_Branch_nop = '0') then
-            ri_if <= ram_out;
-        else
-            ri_if <= x"00000000";
+        if (halt_detected = '0') then
+            if (id_Branch_nop = '0') then
+                ri_if <= ram_out;
+            else
+                ri_if <= x"00000000";
+            end if;
         end if;
     end process;
 
@@ -116,9 +118,9 @@ begin
         end if;
     end process;
 
-    MAIN_PROC: process(clock, keep_simulating)
+    MAIN_PROC: process(clock, keep_simulating, halt_detected)
     begin
-        if (keep_simulating = True) and (clock'event and clock = '1') then
+        if (keep_simulating = True) and (clock'event and clock = '1') and (halt_detected = '0') then
             if (hazard_nop = '0' or id_PC_Src = '1') then
                 if (id_PC_Src = '1') then
                     pc_if <= id_Jump_PC;
@@ -128,7 +130,7 @@ begin
             end if;
 
             if (ri_if = x"0000006F") then
-                stop_simulation <= '1';
+                halt_detected <= '1';
             end if;
 
             BID <= pc_if & ri_if;
