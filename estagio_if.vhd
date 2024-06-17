@@ -60,7 +60,7 @@ architecture behave of estagio_if is
 begin
     hazard_nop <= id_Branch_nop or id_hd_hazard;
     pc_plus4 <= pc_if + x"00000004";
-    ri_if <= ram_out when hazard_nop = '0' else
+    ri_if <= ram_out when id_Branch_nop = '0' else
              x"00000000";
 
     COP_if <= ADD when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "0110011") else
