@@ -58,30 +58,65 @@ architecture behave of estagio_if is
     signal stop_simulation: std_logic := '0';
 
 begin
-    hazard_nop <= id_Branch_nop or id_hd_hazard;
-    pc_plus4 <= pc_if + x"00000004";
-    ri_if <= ram_out when id_Branch_nop = '0' else
-             x"00000000";
+    HAZARD_NOP_PROC: process(id_Branch_nop, id_hd_hazard)
+    begin
+        hazard_nop <= id_Branch_nop or id_hd_hazard;
+    end process;
 
-    COP_if <= ADD when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "0110011") else
-              SLT when (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0110011") else
-              ADDI when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "0010011") else
-              SLTI when (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0010011") else
-              SLLI when (ri_if(14 downto 12) = "001" and ri_if(6 downto 0) = "0010011") else
-              SRLI when (ri_if(31 downto 25) = "0000000" and ri_if(14 downto 12) = "101" and ri_if(6 downto 0) = "0010011") else
-              SRAI when (ri_if(31 downto 25) = "0100000" and ri_if(14 downto 12) = "101" and ri_if(6 downto 0) = "0010011") else
-              LW when (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0000011") else
-              SW when (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0100011") else
-              BEQ when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1100011") else
-              BNE when (ri_if(14 downto 12) = "001" and ri_if(6 downto 0) = "0000000") else
-              BLT when (ri_if(14 downto 12) = "100" and ri_if(6 downto 0) = "0000000") else
-              HALT when (ri_if = x"0000006F") else
-              JAL when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1101111") else
-              JALR when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1100111") else
-              NOP when (ri_if = x"00000000") else
-              NOINST;
+    PC_PLUS4_PROC: process(pc_if)
+    begin
+        pc_plus4 <= pc_if + x"00000004";
+    end process;
 
-    process(clock, keep_simulating)
+    RI_IF_PROC: process(id_Branch_nop, ram_out)
+    begin
+        if (id_Branch_nop = '0') then
+            ri_if <= ram_out;
+        else
+            ri_if <= x"00000000";
+        end if;
+    end process;
+
+    COP_IF_PROC: process(ri_if)
+    begin
+        if (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "0110011") then
+            COP_if <= ADD;
+        elsif (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0110011") then
+            COP_if <= SLT;
+        elsif (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "0010011") then
+            COP_if <= ADDI;
+        elsif (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0010011") then
+            COP_if <= SLTI;
+        elsif (ri_if(14 downto 12) = "001" and ri_if(6 downto 0) = "0010011") then
+            COP_if <= SLLI;
+        elsif (ri_if(31 downto 25) = "0000000" and ri_if(14 downto 12) = "101" and ri_if(6 downto 0) = "0010011") then
+            COP_if <= SRLI;
+        elsif (ri_if(31 downto 25) = "0100000" and ri_if(14 downto 12) = "101" and ri_if(6 downto 0) = "0010011") then
+            COP_if <= SRAI;
+        elsif (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0000011") then
+            COP_if <= LW;
+        elsif (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0100011") then
+            COP_if <= SW;
+        elsif (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1100011") then
+            COP_if <= BEQ;
+        elsif (ri_if(14 downto 12) = "001" and ri_if(6 downto 0) = "0000000") then
+            COP_if <= BNE;
+        elsif (ri_if(14 downto 12) = "100" and ri_if(6 downto 0) = "0000000") then
+            COP_if <= BLT;
+        elsif (ri_if = x"0000006F") then
+            COP_if <= HALT;
+        elsif (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1101111") then
+            COP_if <= JAL;
+        elsif (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1100111") then
+            COP_if <= JALR;
+        elsif (ri_if = x"00000000") then
+            COP_if <= NOP;
+        else
+            COP_if <= NOINST;
+        end if;
+    end process;
+
+    MAIN_PROC: process(clock, keep_simulating)
     begin
         if (keep_simulating = True) and (clock'event and clock = '1') then
             if (hazard_nop = '0' or id_PC_Src = '1') then
