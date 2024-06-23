@@ -41,7 +41,7 @@ entity estagio_id is
 		MemRead_mem			: in	std_logic;						-- Leitura na mem�ria no estagio mem
 		rd_mem				: in	std_logic_vector(4 downto 0);	-- Escrita nos regs. no estagio mem
 		ula_mem				: in 	std_logic_vector(31 downto 0);	-- Saida da ULA no estagio Mem 
-		NPC_mem				: in	std_logic_vector(31 downto 0); -- Valor do NPC no estagio mem
+		NPC_mem				: in	std_logic_vector(31 downto 0);  -- Valor do NPC no estagio mem
 		RegWrite_wb			: in 	std_logic; 						-- Escrita no RegFile vindo de wb
 		writedata_wb		: in 	std_logic_vector(31 downto 0);	-- Valor escrito no RegFile - wb
 		rd_wb				: in 	std_logic_vector(4 downto 0);	-- Endereco do registrador escrito
@@ -52,8 +52,7 @@ entity estagio_id is
 		id_Jump_PC			: out	std_logic_vector(31 downto 0) := x"00000000";-- Destino JUmp/Desvio
 		id_PC_src			: out	std_logic := '0';				-- Seleciona a entrado do PC
 		id_hd_hazard		: out	std_logic := '0';				-- Preserva o if_id e nao inc. PC
-		id_Branch_nop		: out	std_logic := '0';				-- Insercao de um NOP devido ao Branch. 
-																	-- limpa o if_id.ri
+		id_Branch_nop		: out	std_logic := '0';				-- Insercao de um NOP devido ao Branch. Limpa o if_id.ri
 		rs1_id_ex			: out	std_logic_vector(4 downto 0);	-- Endereco rs1 no estagio id
 		rs2_id_ex			: out	std_logic_vector(4 downto 0);	-- Endereco rs2 no estagio id
 		BEX					: out 	std_logic_vector(151 downto 0) := (others => '0');-- Saida do ID > EX
@@ -104,12 +103,34 @@ architecture behave of estagio_id is
     signal AluSrc_id, Memread_id, Memwrite_id, RegWrite_id: std_logic := '0';
     signal MemtoReg_id: std_logic_vector(1 downto 0) := "00";
 
+	signal controls_id: std_logic_vector(10 downto 0) := "0000000000";
+	signal opcode_id: std_logic_vector(6 downto 0) := "0000000";
+	signal funct3_id: std_logic_vector(2 downto 0) := "000";
+	signal funct7_id: std_logic_vector(6 downto 0) := "0000000";
+	signal RtypeSub_id, PC_Src_id_if: std_logic;
+	signal COP_id_signal: std_logic_vector(31 downto 0);
+
+	signal halt_detected: std_logic := '0';
+	signal aluop_type_id: std_logic_vector(1 downto 0);
+	signal branch_id, jump_id: std_logic;
+	signal immSrc_id: std_logic_vector(1 downto 0);
 begin
     rs1_id <= ri_id(19 downto 15);
     rs2_id <= ri_id(24 downto 20);
-    rd_id <= ri_id()
+    rd_id <= ri_id(11 downto 7);
+	opcode_id <= ri_id(6 downto 0);
+	funct3_id <= ri_id(14 downto 12);
+	funct7_id <= ri_id(31 downto 25);
+
+	Imem_id <= 	(31 downto 12 => instr(31)) & instr(31 downto 20) when immSrc_id = "00" else -- I-type
+				(31 downto 12 => instr(31)) & instr(31 downto 25) & instr(11 downto 7) when immSrc_id = "01" else -- S-type
+				(31 downto 12 => instr(31)) & instr(7) & instr(30 downto 25) & instr(11 downto 8) & '0' when immSrc_id = "10" else -- B-type
+			   	(31 downto 20 => instr(31)) & instr(19 downto 12) & instr(20) & instr(30 downto 21) & '0' when immSrc_id = "11" else -- J-type
+			   	x"00000000";
+
+	id_Jump_Pc <= 
     
-    COP_id <= ADD when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "0110011") else
+    COP_id_signal <= ADD when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "0110011") else
         SLT when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0110011") else
         ADDI when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "0010011") else
         SLTI when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0010011") else
@@ -127,47 +148,84 @@ begin
         NOP when (ri_id = x"00000000") else
         NOINST;
 	
-	signal controls: std_logic_vector(10 downto 0);
-	UC_PROC: process(op) 
+	COP_id <= COP_id_signal;
+	
+	UC_PROC: process(opcode_id) 
 		begin
-			case op is
-				when "0000011" => controls <= "10010010000"; -- lw
-				when "0100011" => controls <= "00111000000"; -- sw
-				when "0110011" => controls <= "1--00000100"; -- R-type
-				when "1100011" => controls <= "01000001010"; -- beq
-				when "0010011" => controls <= "10010000100"; -- I-type ALU
-				when "1101111" => controls <= "11100100001"; -- jal
-				when others => controls <= "11111111111"; -- not valid
+			case opcode_id is
+				when "0000011" => controls_id <= "00000110110"; -- lw
+				when "0100011" => controls_id <= "0001--01-10"; -- sw
+				when "0110011" => controls_id <= "00--0010-01"; -- R-type
+				when "1100011" => controls_id <= "1010--00---"; -- B-type
+				when "0010011" => controls_id <= "00000010-11"; -- I-type ALU
+				when "1101111" => controls_id <= "01111010---"; -- jal
+				when "1100111" => controls_id <= "01001010---"; -- jalr
+				when others => controls_id <= "11111111111"; -- not valid
 			end case;
 		end process;
-	(RegWriteD, ImmSrcD(1), ImmSrcD(0), ALUSrcD, MemWriteD,
-	ResultSrcD(1), ResultSrcD(0), AlUOp_id(2), ALUOp_id(1), ALUOp_id(0), AluSrc_id,
-	Memread, ) <= controls;
+	(branch_id, jump_id, immSrc_id(1), immSrc_id(0), MemtoReg_id(1), MemtoReg_id(0), RegWrite_id, Memwrite_id, Memread_id,
+	AluSrc_id, aluop_type_id) <= controls_id;
 
 
-	
-	RtypeSub <= funct7b5 and opb5; -- TRUE for R–type subtract
-	UC_PROC_2: process(opb5, funct3, funct7b5, ALUOp, RtypeSub) 
+	UC_ALU_DECODER_PROC: process(funct3_id, funct7_id(5), aluop_type_id)
 		begin
-			case ALUOp is
-				when "00" => ALUControlD <= "000"; -- addition
-				when "01" => ALUControlD <= "001"; -- subtraction
+			case aluop_type_id is
+				when '0' => ALUOp_id <= "000"; -- addition
 				when others => 
-					case funct3 is -- R-type or I-type ALU
-						when "000" => if RtypeSub = '1' then ALUControlD <= "001"; -- sub
-									else                   ALUControlD <= "000"; -- add, addi
-									end if;
-						when "010" => ALUControlD <= "101"; -- slt, slti
-						when "110" => ALUControlD <= "011"; -- or, ori
-						when "111" => ALUControlD <= "010"; -- and, andi
-						when others => ALUControlD <= "---"; -- unknown
+					case funct3_id is -- R-type or I-type ALU
+						when "000" => ALUOp_id <= "000"; -- add, addi
+						when "010" => ALUOp_id <= "010"; -- slt, slti
+						when "001" => ALUOp_id <= "011"; -- slli
+						when "101" => if funct7_id(5) = '1' then ALUOp_id <= "101"; -- srai
+						else                   ALUOp_id <= "100"; -- srli
+						end if;
+						when others => ALUOp_id <= "111"; -- unknown
 					end case;
 			end case;
-    	end process;
+		end process;
 
-	MAIN_PROC:
+	UC_BRANCH_DECODER_PROC: process(funct3_id, funct7_id(5), branch_id)
+	begin
+		case branch_id is
+			when '0' => ALUOp_id <= "000"; -- addition
+			when others => 
+				case funct3_id is -- R-type or I-type ALU
+					when "000" => ALUOp_id <= "000"; -- add, addi
+					when "010" => ALUOp_id <= "010"; -- slt, slti
+					when "001" => ALUOp_id <= "011"; -- slli
+					when "101" => if funct7_id(5) = '1' then ALUOp_id <= "101"; -- srai
+					else                   ALUOp_id <= "100"; -- srli
+					end if;
+					when others => ALUOp_id <= "111"; -- unknown
+				end case;
+		end case;
+	end process;
 
-	HAZARD_PROC:
+
+	MAIN_PROC: process(clock, halt_detected)
+		begin
+			if(clock'event and clock='1') and (halt_detected='0') then
+				BEX <= RA_id & RB_id & Imed_id & PC_id_Plus4 & rs1_id & rs2_id & rd_id & Aluop_id & AluSrc_id & Memread_id & Memwrite_id & Regwrite_id & MemtoReg_id;
+				COP_EX <= COP_id_signal;
+			end if;
+		end process;
+
+	HAZARD_PROC: process(MemRead_ex, rd_ex, rd_mem, PC_Src_id_if)
+		begin
+			if(Memread_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id))
+				hd_id_flush = '1';
+				id_hd_hazard <= '1';
+			else
+				hd_id_flush = '0';
+				id_hd_hazard <= '0';
+			end if;
+
+			if(PC_Src_id_if = '1') then
+				id_hd_Branch_nop <= '1';
+			else
+				id_hd_Branch_nop <= '0';
+			end if;
+		end process;
 
 	REGFILE : regfile
         port map(
@@ -179,4 +237,8 @@ begin
 			data_out_a		=> RA_id,
 			data_out_b		=> RB_id
         );
+
+	PC_Src_id <= PC_Src_id_if;
+	rs1_id_ex <= rs1_id;
+	rs2_id_ex <= rs2_id;
 end architecture;
