@@ -82,70 +82,76 @@ architecture behave of estagio_id is
     alias PC_id is BID(31 downto 0);
     alias ri_id is BID(63 downto 32);
 
-    -- Alias para sinais a serem redirecionados para o BEX
-    alias RA_id is BEX(31 downto 0);
-    alias RB_id is BEX(63 downto 0);
-    alias Imed_id is BEX(95 downto 64);
-    alias PC_id_Plus4 is BEX(127 downto 96);
-    alias rs1_id is BEX(132 downto 128);
-    alias rs2_id is BEX(137 downto 133);
-    alias rd_id is BEX(142 downto 138);
-    alias Aluop_id is BEX(145 downto 143);
-    alias AluSrc_id is BEX(146);
-    alias Memread_id is BEX(147);
-    alias Memwrite_id is BEX(148);
-    alias RegWrite_id is BEX(149);
-    alias MemtoReg_id is BEX(151 downto 150);
+	signal ri_id_signal: std_logic_vector(31 downto 0) := x"00000000";
 
-    signal RA_id, RB_id, Imem_id, PC_id_Plus4: std_logic_vector(31 downto 0) := x"00000000";
-    signal rs1_id, rs2_id, rd_id: std_logic_vector(31 downto 0) := "00000";
-    signal Aluop_id: std_logic_vector(2 downto 0) := "00";
+    -- Alias para sinais a serem redirecionados para o BEX
+    -- alias RA_id is BEX(31 downto 0);
+    -- alias RB_id is BEX(63 downto 0);
+    -- alias Imed_id is BEX(95 downto 64);
+    -- alias PC_id_Plus4 is BEX(127 downto 96);
+    -- alias rs1_id is BEX(132 downto 128);
+    -- alias rs2_id is BEX(137 downto 133);
+    -- alias rd_id is BEX(142 downto 138);
+    -- alias Aluop_id is BEX(145 downto 143);
+    -- alias AluSrc_id is BEX(146);
+    -- alias Memread_id is BEX(147);
+    -- alias Memwrite_id is BEX(148);
+    -- alias RegWrite_id is BEX(149);
+    -- alias MemtoReg_id is BEX(151 downto 150);
+
+    signal RA_id, RB_id, Imed_id, PC_id_Plus4: std_logic_vector(31 downto 0) := x"00000000";
+    signal rs1_id, rs2_id, rd_id: std_logic_vector(4 downto 0) := "00000";
+    signal Aluop_id: std_logic_vector(2 downto 0) := "000";
     signal AluSrc_id, Memread_id, Memwrite_id, RegWrite_id: std_logic := '0';
     signal MemtoReg_id: std_logic_vector(1 downto 0) := "00";
 
-	signal controls_id: std_logic_vector(10 downto 0) := "0000000000";
+	signal controls_id: std_logic_vector(11 downto 0) := "000000000000";
 	signal opcode_id: std_logic_vector(6 downto 0) := "0000000";
 	signal funct3_id: std_logic_vector(2 downto 0) := "000";
 	signal funct7_id: std_logic_vector(6 downto 0) := "0000000";
 	signal RtypeSub_id, PC_Src_id_if: std_logic;
-	signal COP_id_signal: std_logic_vector(31 downto 0);
+	signal COP_id_signal: instruction_type := NOP;
 
 	signal halt_detected: std_logic := '0';
-	signal aluop_type_id: std_logic_vector(1 downto 0);
-	signal branch_id, jump_id: std_logic;
+	signal aluop_type_id: std_logic;
+	signal hd_id_flush: std_logic := '0';
+	signal branch_id, beq_id, bne_id, blt_id, jump_id, invalid_instr_id: std_logic;
+	signal branch_accepted_id: std_logic;
 	signal immSrc_id: std_logic_vector(1 downto 0);
 begin
-    rs1_id <= ri_id(19 downto 15);
-    rs2_id <= ri_id(24 downto 20);
-    rd_id <= ri_id(11 downto 7);
-	opcode_id <= ri_id(6 downto 0);
-	funct3_id <= ri_id(14 downto 12);
-	funct7_id <= ri_id(31 downto 25);
+	ri_id_signal <= ri_id;
 
-	Imem_id <= 	(31 downto 12 => instr(31)) & instr(31 downto 20) when immSrc_id = "00" else -- I-type
-				(31 downto 12 => instr(31)) & instr(31 downto 25) & instr(11 downto 7) when immSrc_id = "01" else -- S-type
-				(31 downto 12 => instr(31)) & instr(7) & instr(30 downto 25) & instr(11 downto 8) & '0' when immSrc_id = "10" else -- B-type
-			   	(31 downto 20 => instr(31)) & instr(19 downto 12) & instr(20) & instr(30 downto 21) & '0' when immSrc_id = "11" else -- J-type
+    rs1_id <= ri_id_signal(19 downto 15);
+    rs2_id <= ri_id_signal(24 downto 20);
+    rd_id <= ri_id_signal(11 downto 7);
+	opcode_id <= ri_id_signal(6 downto 0);
+	funct3_id <= ri_id_signal(14 downto 12);
+	funct7_id <= ri_id_signal(31 downto 25);
+
+	PC_id_Plus4 <= PC_id + x"00000004";
+
+	Imed_id <= 	(31 downto 12 => ri_id_signal(31)) & ri_id_signal(31 downto 20) when immSrc_id = "00" else -- I-type
+				(31 downto 12 => ri_id_signal(31)) & ri_id_signal(31 downto 25) & ri_id_signal(11 downto 7) when immSrc_id = "01" else -- S-type
+				(31 downto 12 => ri_id_signal(31)) & ri_id_signal(7) & ri_id_signal(30 downto 25) & ri_id_signal(11 downto 8) & '0' when immSrc_id = "10" else -- B-type
+			   	(31 downto 20 => ri_id_signal(31)) & ri_id_signal(19 downto 12) & ri_id_signal(20) & ri_id_signal(30 downto 21) & '0' when immSrc_id = "11" else -- J-type
 			   	x"00000000";
-
-	id_Jump_Pc <= 
     
-    COP_id_signal <= ADD when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "0110011") else
-        SLT when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0110011") else
-        ADDI when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "0010011") else
-        SLTI when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0010011") else
-        SLLI when (ri_id(14 downto 12) = "001" and ri_id(6 downto 0) = "0010011") else
-        SRLI when (ri_id(31 downto 25) = "0000000" and ri_id(14 downto 12) = "101" and ri_id(6 downto 0) = "0010011") else
-        SRAI when (ri_id(31 downto 25) = "0100000" and ri_id(14 downto 12) = "101" and ri_id(6 downto 0) = "0010011") else
-        LW when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0000011") else
-        SW when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0100011") else
-        BEQ when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "1100011") else
-        BNE when (ri_id(14 downto 12) = "001" and ri_id(6 downto 0) = "0000000") else
-        BLT when (ri_id(14 downto 12) = "100" and ri_id(6 downto 0) = "0000000") else
-        HALT when (ri_id = x"0000006F") else
-        JAL when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "1101111") else
-        JALR when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "1100111") else
-        NOP when (ri_id = x"00000000") else
+    COP_id_signal <= ADD when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "0110011") else
+        SLT when (ri_id_signal(14 downto 12) = "010" and ri_id_signal(6 downto 0) = "0110011") else
+        ADDI when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "0010011") else
+        SLTI when (ri_id_signal(14 downto 12) = "010" and ri_id_signal(6 downto 0) = "0010011") else
+        SLLI when (ri_id_signal(14 downto 12) = "001" and ri_id_signal(6 downto 0) = "0010011") else
+        SRLI when (ri_id_signal(31 downto 25) = "0000000" and ri_id_signal(14 downto 12) = "101" and ri_id_signal(6 downto 0) = "0010011") else
+        SRAI when (ri_id_signal(31 downto 25) = "0100000" and ri_id_signal(14 downto 12) = "101" and ri_id_signal(6 downto 0) = "0010011") else
+        LW when (ri_id_signal(14 downto 12) = "010" and ri_id_signal(6 downto 0) = "0000011") else
+        SW when (ri_id_signal(14 downto 12) = "010" and ri_id_signal(6 downto 0) = "0100011") else
+        BEQ when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "1100011") else
+        BNE when (ri_id_signal(14 downto 12) = "001" and ri_id_signal(6 downto 0) = "0000000") else
+        BLT when (ri_id_signal(14 downto 12) = "100" and ri_id_signal(6 downto 0) = "0000000") else
+        HALT when (ri_id_signal = x"0000006F") else
+        JAL when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "1101111") else
+        JALR when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "1100111") else
+        NOP when (ri_id_signal = x"00000000") else
         NOINST;
 	
 	COP_id <= COP_id_signal;
@@ -153,19 +159,18 @@ begin
 	UC_PROC: process(opcode_id) 
 		begin
 			case opcode_id is
-				when "0000011" => controls_id <= "00000110110"; -- lw
-				when "0100011" => controls_id <= "0001--01-10"; -- sw
-				when "0110011" => controls_id <= "00--0010-01"; -- R-type
-				when "1100011" => controls_id <= "1010--00---"; -- B-type
-				when "0010011" => controls_id <= "00000010-11"; -- I-type ALU
-				when "1101111" => controls_id <= "01111010---"; -- jal
-				when "1100111" => controls_id <= "01001010---"; -- jalr
-				when others => controls_id <= "11111111111"; -- not valid
+				when "0000011" => controls_id <= "000001101100"; -- lw
+				when "0100011" => controls_id <= "0001--01-100"; -- sw
+				when "0110011" => controls_id <= "00--0010-010"; -- R-type
+				when "1100011" => controls_id <= "1010--00---0"; -- B-type
+				when "0010011" => controls_id <= "00000010-110"; -- I-type ALU
+				when "1101111" => controls_id <= "01111010---0"; -- jal
+				when "1100111" => controls_id <= "01001010---0"; -- jalr
+				when others => controls_id <= "111111111111"; -- not valid
 			end case;
 		end process;
 	(branch_id, jump_id, immSrc_id(1), immSrc_id(0), MemtoReg_id(1), MemtoReg_id(0), RegWrite_id, Memwrite_id, Memread_id,
-	AluSrc_id, aluop_type_id) <= controls_id;
-
+	AluSrc_id, aluop_type_id, invalid_instr_id) <= controls_id;
 
 	UC_ALU_DECODER_PROC: process(funct3_id, funct7_id(5), aluop_type_id)
 		begin
@@ -184,23 +189,32 @@ begin
 			end case;
 		end process;
 
-	UC_BRANCH_DECODER_PROC: process(funct3_id, funct7_id(5), branch_id)
-	begin
-		case branch_id is
-			when '0' => ALUOp_id <= "000"; -- addition
-			when others => 
-				case funct3_id is -- R-type or I-type ALU
-					when "000" => ALUOp_id <= "000"; -- add, addi
-					when "010" => ALUOp_id <= "010"; -- slt, slti
-					when "001" => ALUOp_id <= "011"; -- slli
-					when "101" => if funct7_id(5) = '1' then ALUOp_id <= "101"; -- srai
-					else                   ALUOp_id <= "100"; -- srli
-					end if;
-					when others => ALUOp_id <= "111"; -- unknown
-				end case;
-		end case;
-	end process;
+	UC_BRANCH_DECODER_PROC: process(funct3_id)
+		begin
+			case funct3_id is -- B-type
+				when "000" =>
+					beq_id <= '1'; -- beq
+					bne_id <= '0';
+					blt_id <= '0';
+				when "001" => 
+					bne_id <= '1'; -- bne
+					beq_id <= '0';
+					blt_id <= '0';
+				when "100" =>
+					blt_id <= '1'; -- blt
+					beq_id <= '0';
+					bne_id <= '0';
+				when others => 
+					beq_id <= '0'; -- unknown
+					bne_id <= '0';
+					blt_id <= '0';
+			end case;
+		end process;
 
+	branch_accepted_id <=	'1' when (beq_id='1' and RA_id=RB_id) or (bne_id='1' and not(RA_id=RB_id)) or (blt_id='1' and RA_id<RB_id) else
+							'0';
+
+	PC_Src_id_if <= jump_id or invalid_instr_id or (branch_id and branch_accepted_id);
 
 	MAIN_PROC: process(clock, halt_detected)
 		begin
@@ -212,23 +226,24 @@ begin
 
 	HAZARD_PROC: process(MemRead_ex, rd_ex, rd_mem, PC_Src_id_if)
 		begin
-			if(Memread_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id))
-				hd_id_flush = '1';
+			if(Memread_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) then
+				hd_id_flush <= '1';
 				id_hd_hazard <= '1';
 			else
-				hd_id_flush = '0';
+				hd_id_flush <= '0';
 				id_hd_hazard <= '0';
 			end if;
 
 			if(PC_Src_id_if = '1') then
-				id_hd_Branch_nop <= '1';
+				id_Branch_nop <= '1';
 			else
-				id_hd_Branch_nop <= '0';
+				id_Branch_nop <= '0';
 			end if;
 		end process;
 
-	REGFILE : regfile
+	REGFILE_MAP: regfile
         port map(
+			clock			=> clock,
 			RegWrite		=> RegWrite_wb,
 			read_reg_rs1	=> rs1_id,
 			read_reg_rs2	=> rs2_id,
@@ -238,7 +253,12 @@ begin
 			data_out_b		=> RB_id
         );
 
-	PC_Src_id <= PC_Src_id_if;
+	id_PC_Src <= PC_Src_id_if;
+	id_Jump_Pc <= 	x"00000400" when invalid_instr_id='1' else
+					rs1_id + Imed_id when jump_id='1' and immSrc_id="00"  else -- jalr
+				  	PC_id + Imed_id  when jump_id='1' or branch_id='1' else --jal and branch
+				  	x"00000000";
+
 	rs1_id_ex <= rs1_id;
 	rs2_id_ex <= rs2_id;
 end architecture;
