@@ -147,8 +147,8 @@ begin
         LW when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0000011") else
         SW when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0100011") else
         BEQ when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "1100011") else
-        BNE when (ri_id(14 downto 12) = "001" and ri_id(6 downto 0) = "0000000") else
-        BLT when (ri_id(14 downto 12) = "100" and ri_id(6 downto 0) = "0000000") else
+        BNE when (ri_id(14 downto 12) = "001" and ri_id(6 downto 0) = "1100011") else
+        BLT when (ri_id(14 downto 12) = "100" and ri_id(6 downto 0) = "1100011") else
         HALT when (ri_id = x"0000006F") else
         JAL when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "1101111") else
         JALR when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "1100111") else
@@ -157,17 +157,22 @@ begin
 	
 	COP_id <= COP_id_signal;
 	
-	UC_PROC: process(opcode_id) 
+	UC_PROC: process(opcode_id, hd_id_flush) 
 		begin
-			case opcode_id is
-				when "0000011" => controls_id <= "000001101100"; -- lw
-				when "0100011" => controls_id <= "0001--01-100"; -- sw
-				when "0110011" => controls_id <= "00--0010-010"; -- R-type
-				when "1100011" => controls_id <= "1010--00---0"; -- B-type
-				when "0010011" => controls_id <= "00000010-110"; -- I-type ALU
-				when "1101111" => controls_id <= "01111010---0"; -- jal
-				when "1100111" => controls_id <= "01001010---0"; -- jalr
-				when others => controls_id <= "111111111111"; -- not valid
+			case hd_id_flush is
+				when '1' => controls_id <= "000000000000"; -- NOP
+				when others =>
+					case opcode_id is
+						when "0000011" => controls_id <= "000001101100"; -- lw
+						when "0100011" => controls_id <= "0001--01-100"; -- sw
+						when "0110011" => controls_id <= "00--0010-010"; -- R-type
+						when "1100011" => controls_id <= "1010--00---0"; -- B-type
+						when "0010011" => controls_id <= "00000010-110"; -- I-type ALU
+						when "1101111" => controls_id <= "01111010---0"; -- jal
+						when "1100111" => controls_id <= "01001010---0"; -- jalr
+						when "0000000" => controls_id <= "000000000000"; -- NOP
+						when others => controls_id <= "111111111111"; -- not valid
+					end case;
 			end case;
 		end process;
 	(branch_id, jump_id, immSrc_id(1), immSrc_id(0), MemtoReg_id(1), MemtoReg_id(0), RegWrite_id, Memwrite_id, Memread_id,
