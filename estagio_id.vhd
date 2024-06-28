@@ -118,6 +118,8 @@ architecture behave of estagio_id is
 	signal branch_id, beq_id, bne_id, blt_id, jump_id, invalid_instr_id: std_logic;
 	signal branch_accepted_id: std_logic;
 	signal immSrc_id: std_logic_vector(1 downto 0);
+
+	signal branch_operator_A_id, branch_operator_B_id: std_logic_vector(31 downto 0) := x"00000000"; 
 begin
 	ri_id_signal <= ri_id;
 
@@ -211,10 +213,21 @@ begin
 			end case;
 		end process;
 
-	branch_accepted_id <=	'1' when (beq_id='1' and RA_id=RB_id) or (bne_id='1' and not(RA_id=RB_id)) or (blt_id='1' and RA_id<RB_id) else
+	branch_operator_A_id <= RA_id when ex_fw_A_Branch="00" else
+							ula_ex when ex_fw_A_Branch="10" else
+							ula_mem when ex_fw_A_Branch="01" else
+							NPC_mem;
+
+	branch_operator_B_id <=	RB_id when ex_fw_B_Branch="00" else
+							ula_ex when ex_fw_B_Branch="10" else
+							ula_mem when ex_fw_B_Branch="01" else
+							NPC_mem;
+
+	branch_accepted_id <=	'1' when (beq_id='1' and branch_operator_A_id=branch_operator_B_id) or (bne_id='1' and not(branch_operator_A_id=branch_operator_B_id)) or (blt_id='1' and branch_operator_A_id<branch_operator_B_id) else
 							'0';
 
-	PC_Src_id_if <= jump_id or invalid_instr_id or (branch_id and branch_accepted_id);
+	PC_Src_id_if <= jump_id or invalid_instr_id or (branch_id and branch_accepted_id) when hd_id_flush='0' else
+					'0';
 
 	MAIN_PROC: process(clock, halt_detected)
 		begin
@@ -224,9 +237,9 @@ begin
 			end if;
 		end process;
 
-	HAZARD_PROC: process(MemRead_ex, rd_ex, rd_mem, PC_Src_id_if)
+	HAZARD_PROC: process(MemRead_ex, rd_ex, rd_mem, MemRead_mem, PC_Src_id_if)
 		begin
-			if(Memread_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) then
+			if(MemRead_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) or (MemRead_mem='1' and branch_id='1' and (rd_mem = rs1_id or rd_mem = rs2_id)) then
 				hd_id_flush <= '1';
 				id_hd_hazard <= '1';
 			else
@@ -256,7 +269,7 @@ begin
 	id_PC_Src <= PC_Src_id_if;
 	id_Jump_Pc <= 	x"00000400" when invalid_instr_id='1' else
 					rs1_id + Imed_id when jump_id='1' and immSrc_id="00"  else -- jalr
-				  	PC_id + Imed_id  when jump_id='1' or branch_id='1' else --jal and branch
+				  	PC_id + Imed_id  when jump_id='1' or branch_id='1' else -- jal and B-type
 				  	x"00000000";
 
 	rs1_id_ex <= rs1_id;
