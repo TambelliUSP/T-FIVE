@@ -75,8 +75,8 @@ begin
               LW when (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0000011") else
               SW when (ri_if(14 downto 12) = "010" and ri_if(6 downto 0) = "0100011") else
               BEQ when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1100011") else
-              BNE when (ri_if(14 downto 12) = "001" and ri_if(6 downto 0) = "0000000") else
-              BLT when (ri_if(14 downto 12) = "100" and ri_if(6 downto 0) = "0000000") else
+              BNE when (ri_if(14 downto 12) = "001" and ri_if(6 downto 0) = "1100011") else
+              BLT when (ri_if(14 downto 12) = "100" and ri_if(6 downto 0) = "1100011") else
               HALT when (ri_if = x"0000006F") else
               JAL when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1101111") else
               JALR when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1100111") else
