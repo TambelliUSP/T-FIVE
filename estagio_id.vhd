@@ -80,9 +80,9 @@ architecture behave of estagio_id is
     
     -- Alias para sinais vindos do BID
     alias PC_id is BID(31 downto 0);
-    alias ri_id is BID(63 downto 32);
+    alias ri_if is BID(63 downto 32);
 
-	signal ri_id_signal: std_logic_vector(31 downto 0) := x"00000000";
+	signal ri_id: std_logic_vector(31 downto 0) := x"00000000";
 
     -- Alias para sinais a serem redirecionados para o BEX
     -- alias RA_id is BEX(31 downto 0);
@@ -112,7 +112,6 @@ architecture behave of estagio_id is
 	signal RtypeSub_id, PC_Src_id_if: std_logic;
 	signal COP_id_signal: instruction_type := NOP;
 
-	signal halt_detected: std_logic := '0';
 	signal aluop_type_id: std_logic;
 	signal hd_id_flush: std_logic := '0';
 	signal branch_id, beq_id, bne_id, blt_id, jump_id, invalid_instr_id: std_logic;
@@ -121,39 +120,39 @@ architecture behave of estagio_id is
 
 	signal branch_operator_A_id, branch_operator_B_id: std_logic_vector(31 downto 0) := x"00000000"; 
 begin
-	ri_id_signal <= ri_id;
+	ri_id <= ri_if;
 
-    rs1_id <= ri_id_signal(19 downto 15);
-    rs2_id <= ri_id_signal(24 downto 20);
-    rd_id <= ri_id_signal(11 downto 7);
-	opcode_id <= ri_id_signal(6 downto 0);
-	funct3_id <= ri_id_signal(14 downto 12);
-	funct7_id <= ri_id_signal(31 downto 25);
+    rs1_id <= ri_id(19 downto 15);
+    rs2_id <= ri_id(24 downto 20);
+    rd_id <= ri_id(11 downto 7);
+	opcode_id <= ri_id(6 downto 0);
+	funct3_id <= ri_id(14 downto 12);
+	funct7_id <= ri_id(31 downto 25);
 
 	PC_id_Plus4 <= PC_id + x"00000004";
 
-	Imed_id <= 	(31 downto 12 => ri_id_signal(31)) & ri_id_signal(31 downto 20) when immSrc_id = "00" else -- I-type
-				(31 downto 12 => ri_id_signal(31)) & ri_id_signal(31 downto 25) & ri_id_signal(11 downto 7) when immSrc_id = "01" else -- S-type
-				(31 downto 12 => ri_id_signal(31)) & ri_id_signal(7) & ri_id_signal(30 downto 25) & ri_id_signal(11 downto 8) & '0' when immSrc_id = "10" else -- B-type
-			   	(31 downto 20 => ri_id_signal(31)) & ri_id_signal(19 downto 12) & ri_id_signal(20) & ri_id_signal(30 downto 21) & '0' when immSrc_id = "11" else -- J-type
+	Imed_id <= 	(31 downto 12 => ri_id(31)) & ri_id(31 downto 20) when immSrc_id = "00" else -- I-type
+				(31 downto 12 => ri_id(31)) & ri_id(31 downto 25) & ri_id(11 downto 7) when immSrc_id = "01" else -- S-type
+				(31 downto 12 => ri_id(31)) & ri_id(7) & ri_id(30 downto 25) & ri_id(11 downto 8) & '0' when immSrc_id = "10" else -- B-type
+			   	(31 downto 20 => ri_id(31)) & ri_id(19 downto 12) & ri_id(20) & ri_id(30 downto 21) & '0' when immSrc_id = "11" else -- J-type
 			   	x"00000000";
     
-    COP_id_signal <= ADD when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "0110011") else
-        SLT when (ri_id_signal(14 downto 12) = "010" and ri_id_signal(6 downto 0) = "0110011") else
-        ADDI when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "0010011") else
-        SLTI when (ri_id_signal(14 downto 12) = "010" and ri_id_signal(6 downto 0) = "0010011") else
-        SLLI when (ri_id_signal(14 downto 12) = "001" and ri_id_signal(6 downto 0) = "0010011") else
-        SRLI when (ri_id_signal(31 downto 25) = "0000000" and ri_id_signal(14 downto 12) = "101" and ri_id_signal(6 downto 0) = "0010011") else
-        SRAI when (ri_id_signal(31 downto 25) = "0100000" and ri_id_signal(14 downto 12) = "101" and ri_id_signal(6 downto 0) = "0010011") else
-        LW when (ri_id_signal(14 downto 12) = "010" and ri_id_signal(6 downto 0) = "0000011") else
-        SW when (ri_id_signal(14 downto 12) = "010" and ri_id_signal(6 downto 0) = "0100011") else
-        BEQ when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "1100011") else
-        BNE when (ri_id_signal(14 downto 12) = "001" and ri_id_signal(6 downto 0) = "0000000") else
-        BLT when (ri_id_signal(14 downto 12) = "100" and ri_id_signal(6 downto 0) = "0000000") else
-        HALT when (ri_id_signal = x"0000006F") else
-        JAL when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "1101111") else
-        JALR when (ri_id_signal(14 downto 12) = "000" and ri_id_signal(6 downto 0) = "1100111") else
-        NOP when (ri_id_signal = x"00000000") else
+    COP_id_signal <= ADD when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "0110011") else
+        SLT when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0110011") else
+        ADDI when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "0010011") else
+        SLTI when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0010011") else
+        SLLI when (ri_id(14 downto 12) = "001" and ri_id(6 downto 0) = "0010011") else
+        SRLI when (ri_id(31 downto 25) = "0000000" and ri_id(14 downto 12) = "101" and ri_id(6 downto 0) = "0010011") else
+        SRAI when (ri_id(31 downto 25) = "0100000" and ri_id(14 downto 12) = "101" and ri_id(6 downto 0) = "0010011") else
+        LW when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0000011") else
+        SW when (ri_id(14 downto 12) = "010" and ri_id(6 downto 0) = "0100011") else
+        BEQ when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "1100011") else
+        BNE when (ri_id(14 downto 12) = "001" and ri_id(6 downto 0) = "0000000") else
+        BLT when (ri_id(14 downto 12) = "100" and ri_id(6 downto 0) = "0000000") else
+        HALT when (ri_id = x"0000006F") else
+        JAL when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "1101111") else
+        JALR when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "1100111") else
+        NOP when (ri_id = x"00000000") else
         NOINST;
 	
 	COP_id <= COP_id_signal;
@@ -229,9 +228,9 @@ begin
 	PC_Src_id_if <= jump_id or invalid_instr_id or (branch_id and branch_accepted_id) when hd_id_flush='0' else
 					'0';
 
-	MAIN_PROC: process(clock, halt_detected)
+	MAIN_PROC: process(clock)
 		begin
-			if(clock'event and clock='1') and (halt_detected='0') then
+			if(clock'event and clock='1') then
 				BEX <= RA_id & RB_id & Imed_id & PC_id_Plus4 & rs1_id & rs2_id & rd_id & Aluop_id & AluSrc_id & Memread_id & Memwrite_id & Regwrite_id & MemtoReg_id;
 				COP_EX <= COP_id_signal;
 			end if;
@@ -268,7 +267,7 @@ begin
 
 	id_PC_Src <= PC_Src_id_if;
 	id_Jump_Pc <= 	x"00000400" when invalid_instr_id='1' else
-					rs1_id + Imed_id when jump_id='1' and immSrc_id="00"  else -- jalr
+					RA_id + Imed_id when jump_id='1' and immSrc_id="00"  else -- jalr
 				  	PC_id + Imed_id  when jump_id='1' or branch_id='1' else -- jal and B-type
 				  	x"00000000";
 
