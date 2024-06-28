@@ -164,12 +164,12 @@ begin
 				when others =>
 					case opcode_id is
 						when "0000011" => controls_id <= "000001101100"; -- lw
-						when "0100011" => controls_id <= "0001--01-100"; -- sw
-						when "0110011" => controls_id <= "00--0010-010"; -- R-type
-						when "1100011" => controls_id <= "1010--00---0"; -- B-type
-						when "0010011" => controls_id <= "00000010-110"; -- I-type ALU
-						when "1101111" => controls_id <= "01111010---0"; -- jal
-						when "1100111" => controls_id <= "01001010---0"; -- jalr
+						when "0100011" => controls_id <= "000100010100"; -- sw
+						when "0110011" => controls_id <= "000000100010"; -- R-type
+						when "1100011" => controls_id <= "101000000000"; -- B-type
+						when "0010011" => controls_id <= "000000100110"; -- I-type ALU
+						when "1101111" => controls_id <= "011110100000"; -- jal
+						when "1100111" => controls_id <= "010010100000"; -- jalr
 						when "0000000" => controls_id <= "000000000000"; -- NOP
 						when others => controls_id <= "111111111111"; -- not valid
 					end case;
@@ -236,7 +236,7 @@ begin
 	MAIN_PROC: process(clock)
 		begin
 			if(clock'event and clock='1') then
-				BEX <= RA_id & RB_id & Imed_id & PC_id_Plus4 & rs1_id & rs2_id & rd_id & Aluop_id & AluSrc_id & Memread_id & Memwrite_id & Regwrite_id & MemtoReg_id;
+				BEX <= MemtoReg_id & Regwrite_id & Memwrite_id & Memread_id & AluSrc_id & Aluop_id & rd_id & rs2_id & rs1_id & PC_id_Plus4 & Imed_id & RB_id & RA_id;
 				COP_EX <= COP_id_signal;
 			end if;
 		end process;

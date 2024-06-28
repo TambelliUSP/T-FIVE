@@ -1031,7 +1031,10 @@ begin
 							
 							null;
 				
-				when others => null;
+				when 11 => rs1_id_ex <= "00000";
+				when 12 => rs1_id_ex <= "00000";
+				when 13 => rs1_id_ex <= "00000";
+				when others => keep_simulating <= false;
 			end case;
 			count := count + 1;
         end if;
