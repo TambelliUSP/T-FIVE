@@ -79,8 +79,8 @@ architecture behave of estagio_id is
 	end component;
     
     -- Alias para sinais vindos do BID
-    alias PC_id is BID(31 downto 0);
-    alias ri_if is BID(63 downto 32);
+    alias ri_if is BID(31 downto 0);
+	alias PC_id is BID(63 downto 32);
 
 	signal ri_id: std_logic_vector(31 downto 0) := x"00000000";
 
