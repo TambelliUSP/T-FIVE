@@ -241,22 +241,15 @@ begin
 			end if;
 		end process;
 
-	HAZARD_PROC: process(MemRead_ex, rd_ex, rd_mem, MemRead_mem, PC_Src_id_if)
-		begin
-			if(MemRead_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) or (MemRead_mem='1' and branch_id='1' and (rd_mem = rs1_id or rd_mem = rs2_id)) then
-				hd_id_flush <= '1';
-				id_hd_hazard <= '1';
-			else
-				hd_id_flush <= '0';
-				id_hd_hazard <= '0';
-			end if;
+	-- Hazard unit Logic
+	hd_id_flush <= 		'1' when (MemRead_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) or (MemRead_mem='1' and branch_id='1' and (rd_mem = rs1_id or rd_mem = rs2_id)) else
+						'0';
+	
+	id_hd_hazard <= 	'1' when (MemRead_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) or (MemRead_mem='1' and branch_id='1' and (rd_mem = rs1_id or rd_mem = rs2_id)) else
+						'0';
 
-			if(PC_Src_id_if = '1') then
-				id_Branch_nop <= '1';
-			else
-				id_Branch_nop <= '0';
-			end if;
-		end process;
+	id_Branch_nop <=	'1' when PC_Src_id_if = '1' else
+					 	'0';
 
 	REGFILE_MAP: regfile
         port map(
