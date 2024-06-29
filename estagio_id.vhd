@@ -195,28 +195,15 @@ begin
 			end case;
 		end process;
 
-	UC_BRANCH_DECODER_PROC: process(funct3_id)
-		begin
-			case funct3_id is -- B-type
-				when "000" =>
-					beq_id <= '1'; -- beq
-					bne_id <= '0';
-					blt_id <= '0';
-				when "001" => 
-					bne_id <= '1'; -- bne
-					beq_id <= '0';
-					blt_id <= '0';
-				when "100" =>
-					blt_id <= '1'; -- blt
-					beq_id <= '0';
-					bne_id <= '0';
-				when others => 
-					beq_id <= '0'; -- unknown
-					bne_id <= '0';
-					blt_id <= '0';
-			end case;
-		end process;
+	-- Branch Control Logic
+	beq_id <= 	'1' when funct3_id = "000" else
+			  	'0';
+	bne_id <= 	'1' when funct3_id = "001" else
+				'0';
+	blt_id <= 	'1' when funct3_id = "100" else
+				'0';
 
+	-- Branch Forwarding logic
 	branch_operator_A_id <= RA_id when ex_fw_A_Branch="00" else
 							ula_ex when ex_fw_A_Branch="10" else
 							ula_mem when ex_fw_A_Branch="01" else
@@ -263,6 +250,7 @@ begin
 			data_out_b		=> RB_id
         );
 
+	-- Logica de atribuicao do id_PC_Src e id_Jump_PC 
 	id_PC_Src <= PC_Src_id_if;
 	id_Jump_Pc <= 	x"00000400" when invalid_instr_id='1' else
 					RA_id + Imed_id when jump_id='1' and immSrc_id="00"  else -- jalr
