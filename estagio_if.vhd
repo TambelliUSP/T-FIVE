@@ -98,7 +98,9 @@ begin
                 halt_detected <= '1';
             end if;
 
-            BID <= pc_if & ri_if;
+	    if(id_hd_hazard = '0') then
+	        BID <= pc_if & ri_if;
+            end if;
         end if;
     end process;
 

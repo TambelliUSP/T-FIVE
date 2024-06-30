@@ -105,7 +105,7 @@ architecture behave of estagio_id is
     signal AluSrc_id, Memread_id, Memwrite_id, RegWrite_id: std_logic := '0';
     signal MemtoReg_id: std_logic_vector(1 downto 0) := "00";
 
-	signal controls_id: std_logic_vector(11 downto 0) := "000000000000";
+	signal controls_id: std_logic_vector(12 downto 0) := "0000000000000";
 	signal opcode_id: std_logic_vector(6 downto 0) := "0000000";
 	signal funct3_id: std_logic_vector(2 downto 0) := "000";
 	signal funct7_id: std_logic_vector(6 downto 0) := "0000000";
@@ -116,7 +116,7 @@ architecture behave of estagio_id is
 	signal hd_id_flush: std_logic := '0';
 	signal branch_id, beq_id, bne_id, blt_id, jump_id, invalid_instr_id: std_logic;
 	signal branch_accepted_id: std_logic;
-	signal immSrc_id: std_logic_vector(1 downto 0);
+	signal immSrc_id: std_logic_vector(2 downto 0);
 
 	signal branch_operator_A_id, branch_operator_B_id: std_logic_vector(31 downto 0) := x"00000000"; 
 begin
@@ -131,10 +131,10 @@ begin
 
 	PC_id_Plus4 <= PC_id + x"00000004";
 
-	Imed_id <= 	(31 downto 12 => ri_id(31)) & ri_id(31 downto 20) when immSrc_id = "00" else -- I-type
-				(31 downto 12 => ri_id(31)) & ri_id(31 downto 25) & ri_id(11 downto 7) when immSrc_id = "01" else -- S-type
-				(31 downto 12 => ri_id(31)) & ri_id(7) & ri_id(30 downto 25) & ri_id(11 downto 8) & '0' when immSrc_id = "10" else -- B-type
-			   	(31 downto 20 => ri_id(31)) & ri_id(19 downto 12) & ri_id(20) & ri_id(30 downto 21) & '0' when immSrc_id = "11" else -- J-type
+	Imed_id <= 	(31 downto 12 => ri_id(31)) & ri_id(31 downto 20) when immSrc_id = "100" else -- I-type
+				(31 downto 12 => ri_id(31)) & ri_id(31 downto 25) & ri_id(11 downto 7) when immSrc_id = "101" else -- S-type
+				(31 downto 12 => ri_id(31)) & ri_id(7) & ri_id(30 downto 25) & ri_id(11 downto 8) & '0' when immSrc_id = "110" else -- B-type
+			   	(31 downto 20 => ri_id(31)) & ri_id(19 downto 12) & ri_id(20) & ri_id(30 downto 21) & '0' when immSrc_id = "111" else -- J-type
 			   	x"00000000";
     
     COP_id_signal <= ADD when (ri_id(14 downto 12) = "000" and ri_id(6 downto 0) = "0110011") else
@@ -160,22 +160,22 @@ begin
 	UC_PROC: process(opcode_id, hd_id_flush) 
 		begin
 			case hd_id_flush is
-				when '1' => controls_id <= "000000000000"; -- NOP
+				when '1' => controls_id <= "0000000000000"; -- NOP
 				when others =>
 					case opcode_id is
-						when "0000011" => controls_id <= "000001101100"; -- lw
-						when "0100011" => controls_id <= "000100010100"; -- sw
-						when "0110011" => controls_id <= "000000100010"; -- R-type
-						when "1100011" => controls_id <= "101000000000"; -- B-type
-						when "0010011" => controls_id <= "000000100110"; -- I-type ALU
-						when "1101111" => controls_id <= "011110100000"; -- jal
-						when "1100111" => controls_id <= "010010100000"; -- jalr
-						when "0000000" => controls_id <= "000000000000"; -- NOP
-						when others => controls_id <= "111111111111"; -- not valid
+						when "0000011" => controls_id <= "0010001101100"; -- lw
+						when "0100011" => controls_id <= "0010100010100"; -- sw
+						when "0110011" => controls_id <= "0000000100010"; -- R-type
+						when "1100011" => controls_id <= "1011000000000"; -- B-type
+						when "0010011" => controls_id <= "0010000100110"; -- I-type ALU
+						when "1101111" => controls_id <= "0111110100000"; -- jal
+						when "1100111" => controls_id <= "0110010100000"; -- jalr
+						when "0000000" => controls_id <= "0000000000000"; -- NOP
+						when others => controls_id <= "1111111111111"; -- not valid
 					end case;
 			end case;
 		end process;
-	(branch_id, jump_id, immSrc_id(1), immSrc_id(0), MemtoReg_id(1), MemtoReg_id(0), RegWrite_id, Memwrite_id, Memread_id,
+	(branch_id, jump_id, immSrc_id(2), immSrc_id(1), immSrc_id(0), MemtoReg_id(1), MemtoReg_id(0), RegWrite_id, Memwrite_id, Memread_id,
 	AluSrc_id, aluop_type_id, invalid_instr_id) <= controls_id;
 
 	UC_ALU_DECODER_PROC: process(funct3_id, funct7_id(5), aluop_type_id)
