@@ -224,7 +224,11 @@ begin
 		begin
 			if(clock'event and clock='1') then
 				BEX <= MemtoReg_id & Regwrite_id & Memwrite_id & Memread_id & AluSrc_id & Aluop_id & rd_id & rs2_id & rs1_id & PC_id_Plus4 & Imed_id & RB_id & RA_id;
-				COP_EX <= COP_id_signal;
+				if(hd_id_flush = '0') then
+					COP_EX <= COP_id_signal;
+				else
+					COP_EX <= NOP;
+				end if;
 			end if;
 		end process;
 
