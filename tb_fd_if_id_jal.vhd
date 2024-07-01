@@ -8,14 +8,14 @@ use std.textio.all;
 library work;
 use work.tipos.all;
 
-entity tb_fd_if_id_bne is
+entity tb_fd_if_id_jal is
     generic(
         imem_init_file: string := "imem.txt";
         dmem_init_file: string := "dmem.txt"
     );
 end entity;
 
-architecture tb_fd_if_id_bne_arch2 of tb_fd_if_id_bne is	
+architecture tb_fd_if_id_jal_arch2 of tb_fd_if_id_jal is	
 
     component estagio_if
         generic(
@@ -233,39 +233,7 @@ begin
 							rd_wb			<= "00000";
 			   				ex_fw_A_Branch 	<= "00";
 							ex_fw_B_Branch 	<= "00"; 
-	when 3=>
-			   				MemRead_ex 		<= '0';
-							rd_ex			<= "00000";
-							--RegWrite_ex 	<= '0';
-							ULA_ex 			<= x"00000000";
-							--rs1_id_ex		<= "00000";
-							--rs2_id_ex		<= "00000";
-							MemRead_mem 	<= '0';
-							rd_mem			<= "00000";
-							ula_mem 		<= x"00000000";
-							NPC_mem			<= x"00000000";
-			   				RegWrite_wb 	<= '1';
-							writedata_wb 	<= x"00000005";
-							rd_wb			<= "00101";
-			   				ex_fw_A_Branch 	<= "00";
-							ex_fw_B_Branch 	<= "00"; 
-	when 4=>
-			   				MemRead_ex 		<= '0';
-							rd_ex			<= "00000";
-							--RegWrite_ex 	<= '0';
-							ULA_ex 			<= x"00000000";
-							--rs1_id_ex		<= "00000";
-							--rs2_id_ex		<= "00000";
-							MemRead_mem 	<= '0';
-							rd_mem			<= "00000";
-							ula_mem 		<= x"00000000";
-							NPC_mem			<= x"00000000";
-			   				RegWrite_wb 	<= '0';
-							writedata_wb 	<= x"00000000";
-							rd_wb			<= "00000";
-			   				ex_fw_A_Branch 	<= "00";
-							ex_fw_B_Branch 	<= "00"; 
-			when others => null;
+	when others => null;
 	
 	end case;
 	if (count = 3) then
