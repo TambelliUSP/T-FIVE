@@ -78,8 +78,8 @@ begin
               BNE when (ri_if(14 downto 12) = "001" and ri_if(6 downto 0) = "1100011") else
               BLT when (ri_if(14 downto 12) = "100" and ri_if(6 downto 0) = "1100011") else
               HALT when (ri_if = x"0000006F") else
-              JAL when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1101111") else
-              JALR when (ri_if(14 downto 12) = "000" and ri_if(6 downto 0) = "1100111") else
+              JAL when ri_if(6 downto 0) = "1101111" else
+              JALR when ri_if(6 downto 0) = "1100111" else
               NOP when (ri_if = x"00000000") else
               NOINST;
 
