@@ -10,7 +10,7 @@ use work.tipos.all;
 
 entity tb_fd_if_id_bne is
     generic(
-        imem_init_file: string := "imem.txt";
+        imem_init_file: string := "imem_tb_if_id_bne.txt";
         dmem_init_file: string := "dmem.txt"
     );
 end entity;
@@ -129,7 +129,7 @@ begin
 	
     fetch : estagio_if 
         generic map(
-            imem_init_file => "imem.txt"
+            imem_init_file => "imem_tb_if_id_bne.txt"
         )
         port map(
 			--Entradas
