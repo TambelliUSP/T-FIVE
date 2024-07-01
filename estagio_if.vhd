@@ -114,7 +114,7 @@ begin
         generic map (
             address_bits => 32, 
             size => 4096,
-            ram_init_file => "imem.txt" 
+            ram_init_file => imem_init_file 
         )
         port map(
             clock 	 => clock,								
