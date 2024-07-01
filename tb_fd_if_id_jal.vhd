@@ -8,14 +8,14 @@ use std.textio.all;
 library work;
 use work.tipos.all;
 
-entity tb_fd_if_id_bne is
+entity tb_fd_if_id_jal is
     generic(
         imem_init_file: string := "imem.txt";
         dmem_init_file: string := "dmem.txt"
     );
 end entity;
 
-architecture tb_fd_if_id_bne_arch2 of tb_fd_if_id_bne is	
+architecture tb_fd_if_id_jal_arch of tb_fd_if_id_jal is	
 
     component estagio_if
         generic(
@@ -129,7 +129,7 @@ begin
 	
     fetch : estagio_if 
         generic map(
-            imem_init_file => "imem.txt"
+            imem_init_file => "imem_tb_if_id_jal.txt"
         )
         port map(
 			--Entradas
@@ -178,102 +178,49 @@ begin
 	clock <= not clock after clock_period / 2;
 
     process(clock) 
-	variable count: integer := 0; 
-	variable fstatus       :file_open_status;
-	variable file_line     :line;
-	
+		variable count: integer := 0; 
+		variable simulation_count: integer := 0; 
+		variable fstatus       :file_open_status;
+		variable file_line     :line;
     begin
-	if(rising_edge(clock)) then
-	case count is
-	when 0=>
-			   				MemRead_ex 		<= '0';
-							rd_ex			<= "00000";
-							--RegWrite_ex 	<= '0';
-							ULA_ex 			<= x"00000000";
-							--rs1_id_ex		<= "00000";
-							--rs2_id_ex		<= "00000";
-							MemRead_mem 	<= '0';
-							rd_mem			<= "00000";
-							ula_mem 		<= x"00000000";
-							NPC_mem			<= x"00000000";
-			   				RegWrite_wb 	<= '0';
-							writedata_wb 	<= x"00000000";
-							rd_wb			<= "00000";
-			   				ex_fw_A_Branch 	<= "00";
-							ex_fw_B_Branch 	<= "00"; 
-	when 1=>
-			   				MemRead_ex 		<= '0';
-							rd_ex			<= "00000";
-							--RegWrite_ex 	<= '0';
-							ULA_ex 			<= x"00000000";
-							--rs1_id_ex		<= "00000";
-							--rs2_id_ex		<= "00000";
-							MemRead_mem 	<= '0';
-							rd_mem			<= "00000";
-							ula_mem 		<= x"00000000";
-							NPC_mem			<= x"00000000";
-			   				RegWrite_wb 	<= '0';
-							writedata_wb 	<= x"00000000";
-							rd_wb			<= "00000";
-			   				ex_fw_A_Branch 	<= "00";
-							ex_fw_B_Branch 	<= "00"; 
-	when 2=>
-			   				MemRead_ex 		<= '0';
-							rd_ex			<= "00000";
-							--RegWrite_ex 	<= '0';
-							ULA_ex 			<= x"00000000";
-							--rs1_id_ex		<= "00000";
-							--rs2_id_ex		<= "00000";
-							MemRead_mem 	<= '0';
-							rd_mem			<= "00000";
-							ula_mem 		<= x"00000000";
-							NPC_mem			<= x"00000000";
-			   				RegWrite_wb 	<= '0';
-							writedata_wb 	<= x"00000000";
-							rd_wb			<= "00000";
-			   				ex_fw_A_Branch 	<= "00";
-							ex_fw_B_Branch 	<= "00"; 
-	when 3=>
-			   				MemRead_ex 		<= '0';
-							rd_ex			<= "00000";
-							--RegWrite_ex 	<= '0';
-							ULA_ex 			<= x"00000000";
-							--rs1_id_ex		<= "00000";
-							--rs2_id_ex		<= "00000";
-							MemRead_mem 	<= '0';
-							rd_mem			<= "00000";
-							ula_mem 		<= x"00000000";
-							NPC_mem			<= x"00000000";
-			   				RegWrite_wb 	<= '1';
-							writedata_wb 	<= x"00000005";
-							rd_wb			<= "00101";
-			   				ex_fw_A_Branch 	<= "00";
-							ex_fw_B_Branch 	<= "00"; 
-	when 4=>
-			   				MemRead_ex 		<= '0';
-							rd_ex			<= "00000";
-							--RegWrite_ex 	<= '0';
-							ULA_ex 			<= x"00000000";
-							--rs1_id_ex		<= "00000";
-							--rs2_id_ex		<= "00000";
-							MemRead_mem 	<= '0';
-							rd_mem			<= "00000";
-							ula_mem 		<= x"00000000";
-							NPC_mem			<= x"00000000";
-			   				RegWrite_wb 	<= '0';
-							writedata_wb 	<= x"00000000";
-							rd_wb			<= "00000";
-			   				ex_fw_A_Branch 	<= "00";
-							ex_fw_B_Branch 	<= "00"; 
-			when others => null;
-	
-	end case;
-	if (count = 3) then
-		count := 0;
-	else
-		count := count + 1;
-	end if;
-end if;
+		if(rising_edge(clock)) then
+			case count is
+			when 0=> --IF: jal x0, 4 // ID: nop
+									MemRead_ex 		<= '0';
+									rd_ex			<= "00000";
+									--RegWrite_ex 	<= '0';
+									ULA_ex 			<= x"00000000";
+									--rs1_id_ex		<= "00000";
+									--rs2_id_ex		<= "00000";
+									MemRead_mem 	<= '0';
+									rd_mem			<= "00000";
+									ula_mem 		<= x"00000000";
+									NPC_mem			<= x"00000000";
+									RegWrite_wb 	<= '0';
+									writedata_wb 	<= x"00000000";
+									rd_wb			<= "00000";
+									ex_fw_A_Branch 	<= "00";
+									ex_fw_B_Branch 	<= "00";
+									assert (BID(31 downto 0) = "0x00000000") severity error
+			when 1=> --IF: jal x0, -4 // ID: jal x0, 4 
+									assert (BID = "0x000000000040006F") severity error
+			when 2=> --IF: jal x0, -4 // ID: NOP
+									assert (BID(31 downto 0) = "0x00000000") severity error
+			when 3=> --IF: nop // ID: jal x0, -4
+									assert (BID = "0x00000004ffdff06f") severity error	
+					when others => null;
+			
+			end case;
+			if (count = 3) then
+				count := 0;
+			else
+				count := count + 1;
+			end if;
+			simulation_count := simulation_count + 1;
+			if (simulation_count = 8) then
+				keep_simulating <= false;
+			end if;
+		end if;
 		eof       <= '1';
-end process;
+	end process;
 end architecture;
