@@ -10,7 +10,7 @@ use work.tipos.all;
 
 entity tb_fd_if_id_jal is
     generic(
-        imem_init_file: string := "imem.txt";
+        imem_init_file: string := "imem_tb_if_id_jal.txt";
         dmem_init_file: string := "dmem.txt"
     );
 end entity;
@@ -201,13 +201,13 @@ begin
 									rd_wb			<= "00000";
 									ex_fw_A_Branch 	<= "00";
 									ex_fw_B_Branch 	<= "00";
-									assert (BID(31 downto 0) = "0x00000000") severity error
+									assert (BID(31 downto 0) = x"00000000") severity error;
 			when 1=> --IF: jal x0, -4 // ID: jal x0, 4 
-									assert (BID = "0x000000000040006F") severity error
+									assert (BID = x"000000000040006F") severity error;
 			when 2=> --IF: jal x0, -4 // ID: NOP
-									assert (BID(31 downto 0) = "0x00000000") severity error
+									assert (BID(31 downto 0) = x"00000000") severity error;
 			when 3=> --IF: nop // ID: jal x0, -4
-									assert (BID = "0x00000004ffdff06f") severity error	
+									assert (BID = x"00000004ffdff06f") severity error;
 					when others => null;
 			
 			end case;
