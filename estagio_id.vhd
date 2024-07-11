@@ -86,7 +86,7 @@ architecture behave of estagio_id is
 
     -- Alias para sinais a serem redirecionados para o BEX
     -- alias RA_id is BEX(31 downto 0);
-    -- alias RB_id is BEX(63 downto 0);
+    -- alias RB_id is BEX(63 downto 32);
     -- alias Imed_id is BEX(95 downto 64);
     -- alias PC_id_Plus4 is BEX(127 downto 96);
     -- alias rs1_id is BEX(132 downto 128);
