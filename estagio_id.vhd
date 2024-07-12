@@ -118,6 +118,8 @@ architecture behave of estagio_id is
 	signal branch_accepted_id: std_logic;
 	signal immSrc_id: std_logic_vector(2 downto 0);
 
+    signal SEPC, SCAUSE: std_logic_vector(31 downto 0) := x"00000000";
+
 	signal branch_operator_A_id, branch_operator_B_id: std_logic_vector(31 downto 0) := x"00000000"; 
 begin
 	ri_id <= ri_if;
@@ -171,12 +173,19 @@ begin
 						when "1101111" => controls_id <= "0111110100000"; -- jal
 						when "1100111" => controls_id <= "0110010100000"; -- jalr
 						when "0000000" => controls_id <= "0000000000000"; -- NOP
-						when others => controls_id <= "1111111111111"; -- not valid
+						when others => controls_id <= "0100000000001"; -- not valid
 					end case;
 			end case;
 		end process;
 	(branch_id, jump_id, immSrc_id(2), immSrc_id(1), immSrc_id(0), MemtoReg_id(1), MemtoReg_id(0), RegWrite_id, Memwrite_id, Memread_id,
 	AluSrc_id, aluop_type_id, invalid_instr_id) <= controls_id;
+
+	-- Registradores de exceção
+	SEPC <= PC_id when invalid_instr_id='1' else
+			x"00000000";
+	
+	SCAUSE <= 	x"00000002" when invalid_instr_id='1' else
+				x"00000000";
 
 	UC_ALU_DECODER_PROC: process(funct3_id, funct7_id(5), aluop_type_id)
 		begin

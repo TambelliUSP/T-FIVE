@@ -81,28 +81,25 @@ architecture behave of estagio_ex is
     alias MemtoReg_ex is BEX(151 downto 150);
 
     -- Alias para sinais a serem redirecionados para o BMEM
-    --alias BMEM(115 downto 114) <= MemToReg_ex;
-    --alias BMEM(113) <= RegWrite_ex;
-    --alias BMEM(112) <= MemWrite_ex;
-    --alias BMEM(111) <= MemRead_ex;
-    --alias BMEM(110 downto 079) <= NPC_ex;
-    --alias BMEM(078 downto 047) <= ULA_ex;
-    --alias BMEM(046 downto 015) <= dado_arma_ex;
-    --alias BMEM(014 downto 010) <= rs1_ex;
-    --alias BMEM(009 downto 005) <= rs2_ex;
-    --alias BMEM(004 downto 000) <= rd_ex;
+    --alias BMEM(115 downto 114) <= MemToReg_mem;
+    --alias BMEM(113) <= RegWrite_mem;
+    --alias BMEM(112) <= MemWrite_mem;
+    --alias BMEM(111) <= MemRead_mem;
+    --alias BMEM(110 downto 079) <= NPC_mem;
+    --alias BMEM(078 downto 047) <= ULA_mem;
+    --alias BMEM(046 downto 015) <= dado_arma_mem;
+    --alias BMEM(014 downto 010) <= rs1_mem;
+    --alias BMEM(009 downto 005) <= rs2_mem;
+    --alias BMEM(004 downto 000) <= rd_mem;
 
     signal dado_arma_ex, ULA_out_ex: std_logic_vector(31 downto 0) := x"00000000";
 
     signal forwarding_operator_A, forwarding_operator_B, alu_operator_B: std_logic_vector(31 downto 0) := x"00000000";
     signal forward_A, forward_B: std_logic_vector(1 downto 0) := "00";
 
-    signal SPEC, SCAUSE: std_logic_vector(31 downto 0) := x"00000000";
-    signal invalid_instr_ex: std_logic := '0';
+    signal BMEM_int: std_logic_vector(115 downto 0) := (others => '0');
+    signal MemToReg_mem: std_logic_vector(1 downto 0) := "00";
 begin
-    invalid_instr_ex <= '1' when BEX(151 downto 143)="111111111" else
-                        '0';
-
     -- Forwarding Unit -> Alu operators
     forward_A <=    "11" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs1_ex) and (MemRead_mem='1') else
                     "10" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs1_ex) else
@@ -115,24 +112,19 @@ begin
                     "00"; -- Caso padrão usa valor do registrador vindo do estagio anterior
 
     -- Forwarding Unit -> Branch Operators
-    ex_fw_A_Branch <=   "10" when (RegWrite_ex='1') and (rs1_id_ex=rd_ex_bex) else
-                        "01" when (RegWrite_mem='1') and (rs1_id_ex=rd_mem) else
+    ex_fw_A_Branch <=   "10" when (RegWrite_ex='1') and (rd_ex_bex/="00000") and (rs1_id_ex=rd_ex_bex) else
+                        "11" when (RegWrite_mem='1') and (rd_mem/="00000") and (rs1_id_ex=rd_mem) and (MemToReg_mem="10") else
+                        "01" when (RegWrite_mem='1') and (rd_mem/="00000") and (rs1_id_ex=rd_mem) else
                         "00"; -- Caso padrão em que não é preciso fazer encaminhamento para branch
-    ex_fw_B_Branch <=   "10" when (RegWrite_ex='1') and (rs2_id_ex=rd_ex_bex) else
-                        "01" when (RegWrite_mem='1') and (rs2_id_ex=rd_mem) else
+    ex_fw_B_Branch <=   "10" when (RegWrite_ex='1') and (rd_ex_bex/="00000") and (rs2_id_ex=rd_ex_bex) else
+                        "11" when (RegWrite_mem='1') and (rd_mem/="00000") and (rs2_id_ex=rd_mem) and (MemToReg_mem="10") else
+                        "01" when (RegWrite_mem='1') and (rd_mem/="00000") and (rs2_id_ex=rd_mem) else
                         "00"; -- Caso padrão em que não é preciso fazer encaminhamento para branch
 
     MAIN_PROC: process(clock)
 		begin
 			if(clock'event and clock='1') then
-                if(invalid_instr_ex = '1') then
-                    SPEC <= PC_ex_Plus4 - 4;
-                    SCAUSE <= x"00000400";
-                    BMEM <= (others => '0');
-                else
-                BMEM <= MemtoReg_ex & RegWrite_ex & Memwrite_ex & Memread_ex_bex & PC_ex_Plus4 & ULA_out_ex & dado_arma_ex & rs1_ex & rs2_ex & rd_ex_bex;
-                end if;
-
+                BMEM_int <= MemtoReg_ex & RegWrite_ex & Memwrite_ex & Memread_ex_bex & PC_ex_Plus4 & ULA_out_ex & dado_arma_ex & rs1_ex & rs2_ex & rd_ex_bex;
 				COP_MEM <= COP_EX;
 			end if;
 		end process;
@@ -147,7 +139,7 @@ begin
                                 writedata_wb when forward_B = "01" else
                                 Memval_mem;
 
-    dado_arma_ex <=     forwarding_operator_B;
+    dado_arma_ex <= forwarding_operator_B;
 
     alu_operator_B <=   forwarding_operator_B when AluSrc_ex = '0' else
                         Imed_ex;
@@ -161,6 +153,8 @@ begin
             zero		=> open
         );
 
+    BMEM <= BMEM_int;
+    MemToReg_mem <= BMEM_int(115 downto 114);
     MemRead_ex <= Memread_ex_bex;
     rd_ex <= rd_ex_bex;
     ULA_ex <= ULA_out_ex;

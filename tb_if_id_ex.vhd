@@ -497,7 +497,7 @@ begin
 			assert rd_bmem_ex =  "00110" severity error;
 			report " rd_ex = " 				& to_string(BMEM(004 downto 000)) severity warning;
 
-			wait for 60 ns;
+			wait for 50 ns;
 			Keep_simulating <= False;
 
         wait;
