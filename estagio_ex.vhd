@@ -96,7 +96,13 @@ architecture behave of estagio_ex is
 
     signal forwarding_operator_A, forwarding_operator_B, alu_operator_B: std_logic_vector(31 downto 0) := x"00000000";
     signal forward_A, forward_B: std_logic_vector(1 downto 0) := "00";
+
+    signal SPEC, SCAUSE: std_logic_vector(31 downto 0) := x"00000000";
+    signal invalid_instr_ex: std_logic := '0';
 begin
+    invalid_instr_ex <= '1' when BEX(151 downto 143)="111111111" else
+                        '0';
+
     -- Forwarding Unit -> Alu operators
     forward_A <=    "11" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs1_ex) and (MemRead_mem='1') else
                     "10" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs1_ex) else
@@ -119,7 +125,14 @@ begin
     MAIN_PROC: process(clock)
 		begin
 			if(clock'event and clock='1') then
-				BMEM <= MemtoReg_ex & RegWrite_ex & Memwrite_ex & Memread_ex_bex & PC_ex_Plus4 & ULA_out_ex & dado_arma_ex & rs1_ex & rs2_ex & rd_ex_bex;
+                if(invalid_instr_ex = '1') then
+                    SPEC <= PC_ex_Plus4 - 4;
+                    SCAUSE <= x"00000400";
+                    BMEM <= (others => '0');
+                else
+                BMEM <= MemtoReg_ex & RegWrite_ex & Memwrite_ex & Memread_ex_bex & PC_ex_Plus4 & ULA_out_ex & dado_arma_ex & rs1_ex & rs2_ex & rd_ex_bex;
+                end if;
+
 				COP_MEM <= COP_EX;
 			end if;
 		end process;
