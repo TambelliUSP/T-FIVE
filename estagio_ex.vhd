@@ -101,13 +101,11 @@ architecture behave of estagio_ex is
     signal MemToReg_mem: std_logic_vector(1 downto 0) := "00";
 begin
     -- Forwarding Unit -> Alu operators
-    forward_A <=    "11" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs1_ex) and (MemRead_mem='1') else
-                    "10" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs1_ex) else
+    forward_A <=    "10" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs1_ex) else
                     "01" when (RegWrite_wb='1') and (rd_wb/="00000") and (rd_wb=rs1_ex) else
                     "00"; -- Caso padrão usa valor do registrador vindo do estagio anterior
 
-    forward_B <=    "11" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs2_ex) and (MemRead_mem='1') else
-                    "10" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs2_ex) else
+    forward_B <=    "10" when (RegWrite_mem='1') and (rd_mem/="00000") and (rd_mem=rs2_ex) else
                     "01" when (RegWrite_wb='1') and (rd_wb/="00000") and (rd_wb=rs2_ex) else
                     "00"; -- Caso padrão usa valor do registrador vindo do estagio anterior
 
@@ -132,12 +130,12 @@ begin
     forwarding_operator_A <=    RA_ex when forward_A = "00" else
                                 ula_mem when forward_A = "10" else
                                 writedata_wb when forward_A = "01" else
-                                Memval_mem;
+                                x"00000000"; -- Erro
     
     forwarding_operator_B <=    RB_ex when forward_B = "00" else
                                 ula_mem when forward_B = "10" else
                                 writedata_wb when forward_B = "01" else
-                                Memval_mem;
+                                x"00000000"; -- Erro
 
     dado_arma_ex <= forwarding_operator_B;
 
