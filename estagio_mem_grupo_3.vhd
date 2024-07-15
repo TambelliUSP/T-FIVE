@@ -10,7 +10,7 @@ use work.tipos.all;
 -- de acesso à memória.
 
 
-entity estagio_mem is
+entity estagio_mem_grupo_3 is
     generic (
         dmem_init_file: string := "dmem.txt"          --Nome do arquivo conteúdo da memoria de programa
     );

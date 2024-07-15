@@ -10,7 +10,7 @@ use work.tipos.all;
 -- de endereço de retorno para instruções de desvio.
 
 
-entity estagio_wb is
+entity estagio_wb_grupo_3 is
     port (
         --Entradas
         bwb  : in std_logic_vector(103 downto 0); -- Buffer de saída do estágio MEM para o estágio WB

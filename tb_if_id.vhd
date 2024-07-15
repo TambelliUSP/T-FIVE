@@ -16,7 +16,7 @@ end entity;
 
 architecture tb_fd_if_id_arch2 of tb_fd_if_id is	
 
-    component estagio_if
+    component estagio_if_grupo_3
         generic(
 		imem_init_file: string := "imem.txt"
         );
@@ -34,7 +34,7 @@ architecture tb_fd_if_id_arch2 of tb_fd_if_id is
         );
     end component;
 
-    component estagio_id
+    component estagio_id_grupo_3
         port(
 			-- Entradas
 			clock				: in 	std_logic; 						-- Base de tempo vindo da bancada de teste
@@ -125,7 +125,7 @@ file 		fptr			: text;
 	
 begin
 	
-    fetch : estagio_if 
+    fetch : estagio_if_grupo_3 
         generic map(
             imem_init_file => "imem_tb_if_id.txt"
         )
@@ -142,7 +142,7 @@ begin
         	BID				=> BID				--Registrador de sa�da do if_stage-if_id
         );
 
-    decode : estagio_id 
+    decode : estagio_id_grupo_3 
         port map(
             -- Entradas
 		clock				=> clock,			-- Base de tempo vindo da bancada de teste
