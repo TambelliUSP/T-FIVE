@@ -30,7 +30,7 @@ use work.tipos.all;
 -- A definicao dos sinais vindos de outros modulos encontra-se nos comentarios da declaracao de 
 -- entidade do estagio id.
 
-entity estagio_id is
+entity estagio_id_grupo_3 is
     port(
 		-- Entradas
 		clock				: in 	std_logic; 						-- Base de tempo- bancada de teste
@@ -61,7 +61,7 @@ entity estagio_id is
     );
 end entity;
 
-architecture behave of estagio_id is
+architecture behave of estagio_id_grupo_3 is
 	component regfile is
 		port(
 			-- Entradas

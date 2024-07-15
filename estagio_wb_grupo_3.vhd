@@ -14,7 +14,7 @@ use work.tipos.all;
 -- da declara�ao de entidade estagio_wb.
 
 
-entity estagio_wb is
+entity estagio_wb_grupo_3 is
     port(
 		-- Entradas
         BWB				: in std_logic_vector(103 downto 0); -- Informa�oes vindas do estagi mem
@@ -27,7 +27,7 @@ entity estagio_wb is
     );
 end entity;
 
-architecture behave of estagio_wb is
+architecture behave of estagio_wb_grupo_3 is
     -- Alias para sinais atribuidos no BWB
     alias MemToReg_wb is BWB(103 downto 102);
     alias RegWrite_wb_bwb is BWB(101);

@@ -20,7 +20,7 @@ use work.tipos.all;
 -- A defini�ao do sinais de entrada e sa�da do est�gio EX encontram-se na declara�ao 
 -- da entidade est�gio_ex e sao passados pelo registrador BEX
 
-entity estagio_ex is
+entity estagio_ex_grupo_3 is
     port(
 		-- Entradas
 		clock				: in 	std_logic;					  		-- Rel�gio do Sistema
@@ -51,7 +51,7 @@ entity estagio_ex is
 		);
 end entity;
 
-architecture behave of estagio_ex is
+architecture behave of estagio_ex_grupo_3 is
     component alu is
         port(
             -- Entradas

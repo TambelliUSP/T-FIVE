@@ -16,7 +16,7 @@ end entity;
 
 architecture fd_arch of fd_if_id_ex is
 
-    component estagio_if
+    component estagio_if_grupo_3
         generic(
             imem_init_file: string := "imem.txt"
         );
@@ -34,7 +34,7 @@ architecture fd_arch of fd_if_id_ex is
         );
     end component;
 
-    component estagio_id
+    component estagio_id_grupo_3
         port(
 			-- Entradas
 			clock				: in 	std_logic; 						-- Base de tempo vindo da bancada de teste
@@ -65,7 +65,7 @@ architecture fd_arch of fd_if_id_ex is
 		);
     end component;
 	
-	component estagio_ex
+	component estagio_ex_grupo_3
 		port (
 			-- Entradas
 			clock				: in 	std_logic;					  		-- Rel�gio do Sistema
@@ -154,7 +154,7 @@ architecture fd_arch of fd_if_id_ex is
 	
 
 begin
-    fetch : estagio_if 
+    fetch : estagio_if_grupo_3
         generic map(
             imem_init_file => "imem_tb_if_id_ex.txt"
         )
@@ -171,7 +171,7 @@ begin
         	BID				=> 	BID 			--Registrador de sa�da do if_stage-if_id
         );
 
-    decode : estagio_id 
+    decode : estagio_id_grupo_3
 		port map(
 			-- Entradas
             clock				=> clock,			-- Base de tempo vindo da bancada de teste
@@ -202,7 +202,7 @@ begin
         );
 		
 		
-	executa: estagio_ex
+	executa: estagio_ex_grupo_3
 		port map(
 		   	-- Entradas
 		clock				=> clock,			-- Rel�gio do Sistema

@@ -12,7 +12,7 @@ end entity;
 
 architecture tb of tb_if2 is 
 
-component estagio_if is
+component estagio_if_grupo_3 is
     generic(
         imem_init_file: string := "imem.txt"
     );
@@ -42,7 +42,7 @@ end component;
 begin
     clock <= not clock after clock_period / 2;
 
-    DUT: estagio_if 
+    DUT: estagio_if_grupo_3 
         generic map (
             imem_init_file => "imem.txt"
         ) port map (

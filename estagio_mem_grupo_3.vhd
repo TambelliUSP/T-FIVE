@@ -15,9 +15,9 @@ use work.tipos.all;
 -- Os sinais de entrada e sa�da deste est�gio encontram-se definidos na declara�ao da 
 -- entidade estagio_mem.
 
-entity estagio_mem is
-    generic(
-        dmem_init_file: string := "dmem.txt"		  		-- Arquivo inicializar a mem�ria de dados
+entity estagio_mem_grupo_3 is
+    generic (
+        dmem_init_file: string := "dmem.txt"          --Nome do arquivo conteúdo da memoria de programa
     );
     port(
 		-- Entradas
@@ -38,7 +38,7 @@ entity estagio_mem is
     );
 end entity;
 
-architecture behave of estagio_mem is
+architecture behave of estagio_mem_grupo_3 is
     component data_ram is	 -- Esta � a mem�ria de dados -dmem
         generic(
             address_bits		: integer 	:= 32;		  -- Bits de end. da mem�ria de dados

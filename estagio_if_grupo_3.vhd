@@ -12,7 +12,7 @@ use work.tipos.all;
 -- Essas informações são passadas por um sinal chamado BID (Buffer para o estágio id). Este buffer é de saída do estágio_if
 -- e de entrada no estágio_id.
 
-entity estagio_if is
+entity estagio_if_grupo_3 is
     generic(
         imem_init_file: string := "imem.txt" --Nome do arquivo com o conteúdo da memória de programa
     );
@@ -31,7 +31,7 @@ entity estagio_if is
     );
 end entity;
 
-architecture behave of estagio_if is
+architecture behave of estagio_if_grupo_3 is
     component ram is
         generic(
             address_bits	: integer 	:= 32;		 
