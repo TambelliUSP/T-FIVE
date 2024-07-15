@@ -33,11 +33,11 @@ architecture behave of estagio_wb_grupo_3 is
     alias RegWrite_wb_bwb is BWB(101);
     alias NPC_wb is BWB(100 downto 069);
     alias ULA_wb is BWB(068 downto 037);
-    alias dado_lido_wb is BWB(036 downto 005);
+    alias Memval_wb is BWB(036 downto 005);
     alias rd_wb_bwb is BWB(004 downto 000);
 begin
     writedata_wb <= ULA_wb when MemToReg_wb="00" else
-                    dado_lido_wb when MemToReg_wb="01" else
+                    Memval_wb when MemToReg_wb="01" else
                     NPC_wb when MemToReg_wb="10" else
                     x"00000000"; -- Erro
     
