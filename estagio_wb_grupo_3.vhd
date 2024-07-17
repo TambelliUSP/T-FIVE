@@ -3,6 +3,7 @@
 ------------------------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all; 
+use std.env.stop;
 
 library work;
 use work.tipos.all;	
@@ -35,6 +36,8 @@ architecture behave of estagio_wb_grupo_3 is
     alias ULA_wb is BWB(068 downto 037);
     alias Memval_wb is BWB(036 downto 005);
     alias rd_wb_bwb is BWB(004 downto 000);
+
+    signal halt_detected: std_logic := '0';
 begin
     writedata_wb <= ULA_wb when MemToReg_wb="00" else
                     Memval_wb when MemToReg_wb="01" else
@@ -43,4 +46,13 @@ begin
     
     RegWrite_wb <= RegWrite_wb_bwb;
     rd_wb <= rd_wb_bwb;
+
+    halt_detected <=    '1' when COP_wb=HALT else
+                        '0';
+
+    HALT_DETECTED_PROC: process
+    begin
+        wait until halt_detected='1';
+        stop;
+    end process;
 end architecture;

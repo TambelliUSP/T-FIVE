@@ -266,7 +266,7 @@ begin
 	-- Logica de atribuicao do id_PC_Src e id_Jump_PC 
 	id_PC_Src <= PC_Src_id_if;
 	id_Jump_Pc <= 	x"00000400" when invalid_instr_id='1' else
-					branch_operator_A_id + Imed_id when jump_id='1' and immSrc_id="00"  else -- jalr
+					branch_operator_A_id + Imed_id when jump_id='1' and immSrc_id="100"  else -- jalr
 				  	PC_id + Imed_id  when jump_id='1' or branch_id='1' else -- jal and B-type
 				  	x"00000000";
 
