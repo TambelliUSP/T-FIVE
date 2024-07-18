@@ -159,22 +159,18 @@ begin
 	
 	COP_id <= COP_id_signal;
 	
-	UC_PROC: process(opcode_id, hd_id_flush) 
+	UC_PROC: process(opcode_id) 
 		begin
-			case hd_id_flush is
-				when '1' => controls_id <= "0000000000000"; -- NOP
-				when others =>
-					case opcode_id is
-						when "0000011" => controls_id <= "0010001101100"; -- lw
-						when "0100011" => controls_id <= "0010100010100"; -- sw
-						when "0110011" => controls_id <= "0000000100010"; -- R-type
-						when "1100011" => controls_id <= "1011000000000"; -- B-type
-						when "0010011" => controls_id <= "0010000100110"; -- I-type ALU
-						when "1101111" => controls_id <= "0111110100000"; -- jal
-						when "1100111" => controls_id <= "0110010100000"; -- jalr
-						when "0000000" => controls_id <= "0000000000000"; -- NOP
-						when others => controls_id <= "0100000000001"; -- not valid
-					end case;
+			case opcode_id is
+				when "0000011" => controls_id <= "0010001101100"; -- lw
+				when "0100011" => controls_id <= "0010100010100"; -- sw
+				when "0110011" => controls_id <= "0000000100010"; -- R-type
+				when "1100011" => controls_id <= "1011000000000"; -- B-type
+				when "0010011" => controls_id <= "0010000100110"; -- I-type ALU
+				when "1101111" => controls_id <= "0111110100000"; -- jal
+				when "1100111" => controls_id <= "0110010100000"; -- jalr
+				when "0000000" => controls_id <= "0000000000000"; -- NOP
+				when others => controls_id <= "0100000000001"; -- not valid
 			end case;
 		end process;
 	(branch_id, jump_id, immSrc_id(2), immSrc_id(1), immSrc_id(0), MemtoReg_id(1), MemtoReg_id(0), RegWrite_id, Memwrite_id, Memread_id,
@@ -232,20 +228,22 @@ begin
 	MAIN_PROC: process(clock)
 		begin
 			if(clock'event and clock='1') then
-				BEX <= MemtoReg_id & Regwrite_id & Memwrite_id & Memread_id & AluSrc_id & Aluop_id & rd_id & rs2_id & rs1_id & PC_id_Plus4 & Imed_id & RB_id & RA_id;
+				
 				if(hd_id_flush = '0') then
 					COP_EX <= COP_id_signal;
+					BEX <= MemtoReg_id & Regwrite_id & Memwrite_id & Memread_id & AluSrc_id & Aluop_id & rd_id & rs2_id & rs1_id & PC_id_Plus4 & Imed_id & RB_id & RA_id;
 				else
 					COP_EX <= NOP;
+					BEX <= "000000000" & rd_id & rs2_id & rs1_id & PC_id_Plus4 & Imed_id & RB_id & RA_id;
 				end if;
 			end if;
 		end process;
 
 	-- Hazard unit Logic
-	hd_id_flush <= 		'1' when (MemRead_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) or (MemRead_mem='1' and branch_id='1' and (rd_mem = rs1_id or rd_mem = rs2_id)) else
+	hd_id_flush <= 		'1' when (MemRead_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) or (MemRead_mem='1' and (branch_id='1' or (jump_id='1' and immSrc_id="100")) and (rd_mem = rs1_id or rd_mem = rs2_id)) else
 						'0';
 	
-	id_hd_hazard <= 	'1' when (MemRead_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) or (MemRead_mem='1' and branch_id='1' and (rd_mem = rs1_id or rd_mem = rs2_id)) else
+	id_hd_hazard <= 	'1' when (MemRead_ex = '1' and (rd_ex = rs1_id or rd_ex = rs2_id)) or (MemRead_mem='1' and (branch_id='1' or (jump_id='1' and immSrc_id="100")) and (rd_mem = rs1_id or rd_mem = rs2_id)) else
 						'0';
 
 	id_Branch_nop <=	'1' when PC_Src_id_if = '1' else
